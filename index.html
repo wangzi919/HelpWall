@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>HelpWall - A little help, right around the corner.</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#20df60",
+            "background-light": "#f6f8f6",
+            "background-dark": "#112116",
+          },
+          fontFamily: {
+            "display": ["Spline Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: 'Spline Sans', sans-serif; min-height: max(884px, 100dvh); }
+    .line-icon {
+      width: 24px; height: 24px; background-color: #06C755;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.2,5.7c-0.2-0.8-0.6-1.5-1.1-2.1c-0.6-0.6-1.3-1-2.1-1.2C17.2,2.1,16.4,2,12,2c-4.4,0-5.2,0.1-6,0.4c-0.8,0.2-1.5,0.6-2.1,1.1C3.3,4.2,2.9,4.9,2.7,5.7C2.4,6.5,2.3,7.3,2.3,11.7c0,4.4,0.1,5.2,0.4,6c0.2,0.8,0.6,1.5,1.1,2.1c0.6,0.6,1.3,1,2.1,1.2c0.8,0.3,1.6,0.4,6,0.4c4.4,0,5.2-0.1,6-0.4c0.8-0.2,1.5-0.6,2.1-1.1c0.6-0.6,1-1.3,1.2-2.1c0.3-0.8,0.4-1.6,0.4-6C21.7,7.3,21.6,6.5,21.2,5.7z M19.4,17.4c-0.1,0.5-0.4,1-0.7,1.3c-0.4,0.4-0.8,0.6-1.3,0.7c-0.6,0.3-1.4,0.3-5.4,0.3s-4.7,0-5.4-0.3c-0.5-0.1-1-0.4-1.3-0.7c-0.4-0.4-0.6-0.8-0.7-1.3c-0.3-0.6-0.3-1.4-0.3-5.4s0-4.7,0.3-5.4c0.1-0.5,0.4-1,0.7-1.3c0.4-0.4,0.8-0.6,1.3-0.7c0.6-0.3,1.4-0.3,5.4-0.3s4.7,0,5.4,0.3c0.5,0.1,1,0.4,1.3,0.7c0.4,0.4,0.6,0.8,0.7,1.3c0.3,0.6,0.3,1.4,0.3,5.4S19.7,16.7,19.4,17.4z M17,11.4c0-2.8-1.5-4.4-4.5-4.4H8.7v8.9h3.7c3.1,0,4.6-1.5,4.6-4.5zM15,11.4c0,1.9-0.8,2.7-2.8,2.7h-1.6V8.7h1.6C14.2,8.7,15,9.5,15,11.4z M6.8,15.9V8h-1v7.9H6.8z'/%3E%3C/svg%3E") no-repeat center;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.2,5.7c-0.2-0.8-0.6-1.5-1.1-2.1c-0.6-0.6-1.3-1-2.1-1.2C17.2,2.1,16.4,2,12,2c-4.4,0-5.2,0.1-6,0.4c-0.8,0.2-1.5,0.6-2.1,1.1C3.3,4.2,2.9,4.9,2.7,5.7C2.4,6.5,2.3,7.3,2.3,11.7c0,4.4,0.1,5.2,0.4,6c0.2,0.8,0.6,1.5,1.1,2.1c0.6,0.6,1.3,1,2.1,1.2c0.8,0.3,1.6,0.4,6,0.4c4.4,0,5.2-0.1,6-0.4c0.8-0.2,1.5-0.6,2.1-1.1c0.6-0.6,1-1.3,1.2-2.1c0.3-0.8,0.4-1.6,0.4-6C21.7,7.3,21.6,6.5,21.2,5.7z M19.4,17.4c-0.1,0.5-0.4,1-0.7,1.3c-0.4,0.4-0.8,0.6-1.3,0.7c-0.6,0.3-1.4,0.3-5.4,0.3s-4.7,0-5.4-0.3c-0.5-0.1-1-0.4-1.3-0.7c-0.4-0.4-0.6-0.8-0.7-1.3c-0.3-0.6-0.3-1.4-0.3-5.4s0-4.7,0.3-5.4c0.1-0.5,0.4-1,0.7-1.3c0.4-0.4,0.8-0.6,1.3-0.7c0.6-0.3,1.4-0.3,5.4-0.3s4.7,0,5.4,0.3c0.5,0.1,1,0.4,1.3,0.7c0.4,0.4,0.6,0.8,0.7,1.3c0.3,0.6,0.3,1.4,0.3,5.4S19.7,16.7,19.4,17.4z M17,11.4c0-2.8-1.5-4.4-4.5-4.4H8.7v8.9h3.7c3.1,0,4.6-1.5,4.6-4.5zM15,11.4c0,1.9-0.8,2.7-2.8,2.7h-1.6V8.7h1.6C14.2,8.7,15,9.5,15,11.4z M6.8,15.9V8h-1v7.9H6.8z'/%3E%3C/svg%3E") no-repeat center;
+    }
+  </style>
+</head>
+<body class="font-display">
+  <div class="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-[#B0E0E6] to-[#FFFBF5]">
+    <div class="flex flex-col items-center justify-center p-4">
+      <div class="w-full max-w-sm flex flex-col items-center">
+        <div class="w-full max-w-[300px]">
+          <div class="aspect-square bg-center bg-no-repeat bg-contain" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDQfz3wy3rbPnDvnYqhEL4glx2Ym8tudW1fwQtW-HvRTeT0ek8C7m2bTHS22kFX0y88olcFsWr7-kPqnyYXdrxAk-nnmPB2Zv91VkiTA5HrHl17k7MRJUA_sVpxhR02ojRaP3zpYEASvHQwQN9FOK_bGxC87AdIIOT8kjKHg1lpByDFKVfQ55_2SH-6iXvwZku-Lvjg2QgG8n4zBhS3FrrzgsBC1B0r0zti7uAmdeVnH_U-R7TjGBtcyUcdiJs9bJrVRosFgZvm6Hce");'></div>
+        </div>
+        <h1 class="text-[#1A3A3A] text-[32px] font-bold text-center pt-6 pb-3">HelpWall</h1>
+        <p class="text-gray-700/80 text-base text-center pb-8">A little help, right around the corner.</p>
+        <div class="flex flex-col gap-3 w-full px-4">
+          <button id="login-btn" class="flex items-center justify-center gap-2 rounded-full h-12 px-5 bg-primary text-white font-bold shadow-md hover:bg-primary/90 transition">
+            <div class="line-icon" style="background-color: white;"></div>
+            <span>Login with LINE</span>
+          </button>
+          <button id="guest-btn" class="flex items-center justify-center rounded-full h-12 px-5 text-[#1A3A3A] font-bold hover:bg-black/5 transition">
+            Continue as Guest
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('login-btn').addEventListener('click', () => {
+      window.location.href = 'main.html';
+    });
+    document.getElementById('guest-btn').addEventListener('click', () => {
+      window.location.href = 'main.html';
+    });
+  </script>
+</body>
+</html>

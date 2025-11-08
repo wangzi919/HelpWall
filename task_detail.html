@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&amp;family=Patrick+Hand&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#20df60",
+              "background-light": "#FFFDF5",
+              "background-dark": "#112116",
+              "accent-yellow": "#FFF5B8",
+              "accent-mint": "#D5F0E5",
+              "accent-blue": "#C9E9FF",
+              "accent-peach": "#FFDDC9",
+              "text-main": "#3D3522",
+              "text-subtle": "#857E6B",
+            },
+            fontFamily: {
+              display: ["Nunito", "sans-serif"],
+              handwritten: ["Patrick Hand", "cursive"],
+            },
+            borderRadius: {
+              DEFAULT: "1.25rem", // 20px
+              lg: "1.5rem", // 24px
+              xl: "1.875rem", // 30px
+              full: "9999px",
+            },
+            boxShadow: {
+              soft: "0 4px 12px 0 rgba(0, 0, 0, 0.05)",
+            },
+          },
+        },
+      };
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+        line-height: 1;
+      }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+
+<!-- Top App Bar -->
+<div class="sticky top-0 z-10 flex items-center bg-background-light/80 dark:bg-background-dark/80 p-4 pb-2 justify-between backdrop-blur-sm">
+  <!-- ← 返回 main.html -->
+  <button onclick="window.location.href='main.html'" class="flex items-center justify-center rounded-full h-12 w-12 text-text-main hover:bg-black/5 transition">
+    <span class="material-symbols-outlined text-3xl">arrow_back</span>
+  </button>
+
+  <h2 class="text-text-main text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Task Details</h2>
+
+  <button class="flex items-center justify-center rounded-full h-12 w-12 text-text-main">
+    <span class="material-symbols-outlined text-3xl">more_horiz</span>
+  </button>
+</div>
+
+<main class="flex flex-col gap-4 p-4 pb-32">
+
+  <!-- Requester Info Card -->
+  <div class="flex items-center gap-4 bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-soft">
+    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-16 w-16"
+         data-alt="Portrait of Eliza"
+         style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCgyPw9MMuwWPcsBAhWYj78FVj_8iUPMwDUIQnTg765FiO9pXUE5bDu5UwcMpngEvcdPWBuCCjjAx7Pfgq92fN72Anj0pqfad0uOpMFfJKJAdZElwoy3c_uvmoEzhReJaiVuJ0F1-r9_xDsPC_HScB-CBoVHfPvqdxJ9WTS-JDU7Ax0_clKXZ60bBaJmT1Tkd6aXfSO-ZlOhPpoLuCbD_rqgIoxbZuEIbFYwWgAX-N_xMuAdL6Yn4QzCu3nCbXVcwX3kDn-YJ9Eeens');">
+    </div>
+    <div class="flex-1">
+      <p class="text-text-main dark:text-gray-100 text-lg font-bold">Eliza</p>
+      <p class="text-text-subtle dark:text-gray-400 text-sm font-normal">Posted 2 hours ago</p>
+    </div>
+  </div>
+
+  <!-- Task Details Card -->
+  <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-soft flex flex-col gap-4">
+    <h1 class="text-text-main dark:text-gray-100 text-[28px] font-extrabold leading-tight tracking-tight">Need help carrying groceries</h1>
+    <p class="text-text-main dark:text-gray-200 text-base font-normal leading-relaxed">
+      Hi! I just got back from the store and have a few heavy bags of groceries. Would anyone be able to help me carry them up to my apartment on the 3rd floor? It shouldn't take more than 5 minutes. Thank you so much!
+    </p>
+
+    <div class="flex gap-2 pt-2 flex-wrap">
+      <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-accent-mint px-4">
+        <p class="text-text-main text-sm font-medium">Groceries</p>
+      </div>
+      <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-accent-peach px-4">
+        <p class="text-text-main text-sm font-medium">Urgent</p>
+      </div>
+      <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-accent-blue px-4">
+        <p class="text-text-main text-sm font-medium">Low Effort</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments/Chat Section -->
+  <div class="flex flex-col gap-4">
+    <h3 class="text-text-main dark:text-gray-100 font-bold text-lg px-2">Comments</h3>
+
+    <div class="flex w-full justify-start">
+      <div class="bg-accent-blue p-4 rounded-t-lg rounded-br-lg max-w-[80%]">
+        <p class="text-text-main text-base">Hi Eliza! I can help with that. I'm just around the corner. Be there in 5!</p>
+        <p class="text-text-subtle text-xs text-right mt-1">Leo</p>
+      </div>
+    </div>
+
+    <div class="flex w-full justify-end">
+      <div class="bg-gray-100 dark:bg-zinc-700 p-4 rounded-t-lg rounded-bl-lg max-w-[80%]">
+        <p class="text-text-main dark:text-gray-200 text-base">Oh, that's amazing! Thank you so much, Leo! See you soon.</p>
+        <p class="text-text-subtle dark:text-gray-400 text-xs text-right mt-1">Eliza</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thank You Note -->
+  <div class="relative mt-6 rotate-[-2deg] transform">
+    <div class="absolute top-[-10px] right-[-10px] text-3xl">📌</div>
+    <div class="bg-accent-yellow p-6 rounded-lg shadow-soft flex flex-col items-center text-center gap-3">
+      <h3 class="font-handwritten text-text-main text-2xl tracking-wide">A Big Thank You!</h3>
+      <p class="font-handwritten text-text-main text-lg leading-snug">
+        To Leo for the super quick help! You made my day so much easier. ✨
+      </p>
+      <div class="flex gap-2 text-2xl mt-2">
+        <span>💖</span>
+        <span>🌟</span>
+        <span>😊</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Floating CTA Button -->
+<div class="fixed bottom-0 left-0 w-full bg-background-light/80 dark:bg-background-dark/80 p-4 backdrop-blur-sm">
+  <button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-accent-mint text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90">
+    Accept Help
+  </button>
+</div>
+
+</div>
+</body>
+</html>
