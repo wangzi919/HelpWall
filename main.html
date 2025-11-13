@@ -204,7 +204,7 @@
                 card.className = "task-card flex flex-col rounded-lg p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer";
                 card.style.backgroundColor = task.color || "#FFFACD";
                 card.innerHTML = `
-                    <div class="w-full aspect-video rounded-lg bg-cover bg-center" style="background-image:url('https://picsum.photos/seed/${task.id}/400/300')"></div>
+                    <div class="w-full aspect-video rounded-lg bg-cover bg-center" style="background-image:url(${task.image_url})"></div>
                     <div class="flex flex-col gap-1 pt-4">
                         <p class="text-text-secondary text-sm font-medium">${task.distance || 'nearby'}</p>
                         <p class="text-text-primary text-lg font-bold">${task.title}</p>
