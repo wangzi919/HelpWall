@@ -8,17 +8,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <script>
+        // === Supabase 初始化 ===
+        const SUPABASE_URL = "https://zyeykllnefwvlokrecbv.supabase.co"; // ← 換成你的 Supabase Project URL
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5ZXlrbGxuZWZ3dmxva3JlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDg2MjQsImV4cCI6MjA3ODYyNDYyNH0.zTx11lXOPAdeakTXQch9OEO4c7rfhMImNaKDz4G9DIs"; // ← 換成你的 anon public key
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#A0E7E5", // Soft Mint Green
-                        "accent": "#FFBF86", // Warm Orange
-                        "background-light": "#FFFDF5", // Creamy White
+                        "primary": "#A0E7E5",
+                        "accent": "#FFBF86",
+                        "background-light": "#FFFDF5",
                         "text-primary": "#4A4A4A",
                         "text-secondary": "#7D7D7D",
                         "note-yellow": "#FFFACD",
@@ -29,9 +35,9 @@
                         "display": ["Spline Sans", "sans-serif"]
                     },
                     borderRadius: {
-                        "DEFAULT": "1.25rem", // 20px
-                        "lg": "1.5rem", // 24px
-                        "xl": "1.875rem", // 30px
+                        "DEFAULT": "1.25rem",
+                        "lg": "1.5rem",
+                        "xl": "1.875rem",
                         "full": "9999px"
                     },
                     boxShadow: {
@@ -41,6 +47,7 @@
             },
         }
     </script>
+
     <style type="text/tailwindcss">
         @layer base {
             .material-symbols-outlined {
@@ -51,7 +58,7 @@
     <style>
         body {
             min-height: max(884px, 100dvh);
-            overflow: hidden; /* 防止頁面在切換時跳動 */
+            overflow: hidden;
         }
         #map {
             height: calc(100vh - 60px - 56px);
@@ -98,21 +105,10 @@
             font-size: 24px;
             font-variation-settings: 'FILL' 1;
         }
-        .distance-tooltip {
-            background-color: rgba(255, 253, 245, 0.8);
-            backdrop-filter: blur(4px);
-            border: none;
-            border-radius: 9999px;
-            color: #4A4A4A;
-            font-family: "Spline Sans", sans-serif;
-            font-weight: 500;
-            box-shadow: none;
-        }
     </style>
 </head>
 <body class="bg-background-light font-display">
-    <div class="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden text-text-primary">
-
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden text-text-primary">
         <!-- App Bar -->
         <div class="sticky top-0 z-10 flex items-center justify-between bg-background-light/80 px-4 py-3 backdrop-blur-sm">
             <div class="flex size-12 shrink-0 items-center justify-start">
@@ -135,100 +131,106 @@
 
         <!-- Segmented Buttons -->
         <div class="px-4 py-2 z-10">
-            <div class="flex h-12 flex-1 items-center justify-center rounded-full bg-black/5 p-1 shadow-inner">
-                <label class="flex h-full grow cursor-pointer items-center justify-center overflow-hidden rounded-full px-3 has-[:checked]:bg-white has-[:checked]:shadow-soft has-[:checked]:text-text-primary text-text-secondary text-sm font-medium leading-normal transition-all">
-                    <span class="truncate">Wall View</span>
-                    <input checked class="invisible w-0" name="view-toggle" type="radio" value="Wall View" id="view-wall" />
+            <div class="flex h-12 items-center justify-center rounded-full bg-black/5 p-1 shadow-inner">
+                <label class="flex h-full grow cursor-pointer items-center justify-center rounded-full px-3 has-[:checked]:bg-white has-[:checked]:shadow-soft text-sm font-medium transition-all">
+                    <span>Wall View</span>
+                    <input checked class="invisible w-0" name="view-toggle" type="radio" id="view-wall" />
                 </label>
-                <label class="flex h-full grow cursor-pointer items-center justify-center overflow-hidden rounded-full px-3 has-[:checked]:bg-white has-[:checked]:shadow-soft has-[:checked]:text-text-primary text-text-secondary text-sm font-medium leading-normal transition-all">
-                    <span class="truncate">Map View</span>
-                    <input class="invisible w-0" name="view-toggle" type="radio" value="Map View" id="view-map" />
+                <label class="flex h-full grow cursor-pointer items-center justify-center rounded-full px-3 has-[:checked]:bg-white has-[:checked]:shadow-soft text-sm font-medium transition-all">
+                    <span>Map View</span>
+                    <input class="invisible w-0" name="view-toggle" type="radio" id="view-map" />
                 </label>
             </div>
         </div>
 
         <!-- Help Request Cards Grid -->
-        <main id="wall-view-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 pb-24 overflow-y-auto" style="height: calc(100vh - 60px - 56px);">
-            <!-- Card 1 -->
-            <div class="task-card flex flex-col rounded-lg bg-note-yellow p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer" data-task-id="1" style="transform: rotate(-1.5deg);">
-                <div class="w-full aspect-video rounded-lg bg-cover bg-center" data-alt="A collection of healthy green potted plants." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAh__ENsoBIRAJjhBJcBD_pVmgD0YBJIxGQoHSuHhs012MXb0XqKdeOTeTECKeNGVMnklVWJuvV6VUwiKikP80Lvsm6y05AjDQ2gcYLqwEJjdTHSQWmMJHlBbRK9ODLn-3H1JfhYWMw8ED9hhgKJMCmBw5B1UH5pqEXoy72o3GNz5kxrJ_HkpUnQC8wB8V1tBJSgGLtVL3X2058fU_jPPBMgQSWDRYhiWJz50Sn3DvoXYrjIhghHtDANoyO7AcBiy_hh2kF8DUOjfyr')"></div>
-                <div class="flex flex-col gap-1 pt-4">
-                    <p class="text-text-secondary text-sm font-medium">1.5 km away</p>
-                    <p class="text-text-primary text-lg font-bold leading-tight">Water my plants this weekend</p>
-                    <p class="text-text-secondary text-base leading-normal">Going away, need someone to check on my flowers.</p>
-                </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="task-card flex flex-col rounded-lg bg-note-blue p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer" data-task-id="2" style="transform: rotate(1deg);">
-                <div class="w-full aspect-video rounded-lg bg-cover bg-center" data-alt="A person carrying a small couch with difficulty." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCdQOJLhY85OiLPaJJucryBtHg7a3OTrn-9AvfNivIdtCoIikXBasHTYbAryN90LJN1tQzR_9Ji1LicGRP1QJ45Q4ZiH47CGz5wTL2Y3jmV_EOPHB3naSTT6VDLI6cK-dhLEli2jL71QN30aGRKG0UTRHXlCoc-R0XuHq0SKfElANOBpn4kz4MuqvstpFAIflMGu1CbvsHXuzyb7VdlvvKt6HjH5_GLRsKMSWMX3za-mcFELcIiS-G8TAA3Q-NiwiYZLFtH4VQNwAx3')"></div>
-                <div class="flex flex-col gap-1 pt-4">
-                    <p class="text-text-secondary text-sm font-medium">2 km away</p>
-                    <p class="text-text-primary text-lg font-bold leading-tight">Help moving a small couch</p>
-                    <p class="text-text-secondary text-base leading-normal">Just need an extra pair of hands for 10 minutes!</p>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="task-card flex flex-col rounded-lg bg-note-pink p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer" data-task-id="3" style="transform: rotate(-0.8deg);">
-                <div class="w-full aspect-video rounded-lg bg-cover bg-center" data-alt="A happy golden retriever on a leash, ready for a walk." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz1LaCxjrovJT5XFGCdwhZIoDhbd3M9IQmFg2pGXh9n6SNttDjKuUm9RaYZ0XbvN_rnvjknT_7_-OS-VCJjY5i43IR6mprMenMVTyWzH10Li86kkF51DzjSuY8hYFfnFm1an_4bk9usoiV0fvDB6M4u9aVcN1Rto_ZT34UAsojCJiOadnC6zitLozRktKUtuVsxtH7jWJ-NFSw_LRb1mdRxTcUTTexX7VyOVJOpojMQlh2TbjwEtoWT0cMhJrgaG-QUVwdYQGnWc4Z')"></div>
-                <div class="flex flex-col gap-1 pt-4">
-                    <p class="text-text-secondary text-sm font-medium">2.2 km away</p>
-                    <p class="text-text-primary text-lg font-bold leading-tight">Dog Walking Needed</p>
-                    <p class="text-text-secondary text-base leading-normal">Friendly golden retriever needs a walk tomorrow afternoon.</p>
-                </div>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="task-card flex flex-col rounded-lg bg-note-yellow p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer" data-task-id="4" style="transform: rotate(1.2deg);">
-                <div class="w-full aspect-video rounded-lg bg-cover bg-center" data-alt="A grocery bag full of fresh vegetables on a kitchen counter." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC0WRz_6NA42WOZI5-8uRr0Q_idt3y43Wl5cJ2Bc3F0VSTMFv5J_wvd0OUMp9Ab7ckEEN4SOEeuvfjw5DqAndoXhOkbM9I3Tc5w2AYcYs9m48KLlA8fnUKUOk9KYkkQuSN47uhW-5A1dnvrom_-NPKakgwbRaiQkAD4BW_-rlvAkQyzaG3l6JnYqqpJruFPxh9FMyTduKaBULyX-UpvtQfUNfHb5SeV5Q-0dBVsz2Eh-wtCpC5Ca8A4RMWOXFzvIv1-Sc44Z2zv5fUO')"></div>
-                <div class="flex flex-col gap-1 pt-4">
-                    <p class="text-text-secondary text-sm font-medium">500 m away</p>
-                    <p class="text-text-primary text-lg font-bold leading-tight">Pick up groceries for me</p>
-                    <p class="text-text-secondary text-base leading-normal">I'm home with a cold and can't go out. List is ready!</p>
-                </div>
-            </div>
-        </main>
+        <main id="wall-view-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 pb-24 overflow-y-auto" style="height: calc(100vh - 60px - 56px);"></main>
 
         <main id="map-view-container" class="hidden">
             <div id="map"></div>
         </main>
 
+        <!-- 新增任務按鈕 -->
         <div class="fixed bottom-6 right-6 z-20">
-            <button class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-text-primary shadow-lg transition-transform hover:scale-105">
+            <button id="add-btn" class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-text-primary shadow-lg transition-transform hover:scale-105">
                 <span class="material-symbols-outlined text-4xl">add</span>
             </button>
+        </div>
+
+        <!-- 新增任務表單 -->
+        <div id="task-form" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 w-80 shadow-lg flex flex-col gap-3">
+                <h2 class="text-lg font-bold">Add New Help Task</h2>
+                <input id="task-title" placeholder="Title" class="border rounded-lg p-2" />
+                <textarea id="task-desc" placeholder="Description" class="border rounded-lg p-2"></textarea>
+                <button id="submit-task" class="bg-primary text-white rounded-lg py-2 hover:opacity-90">Submit</button>
+                <button id="close-task" class="text-sm text-gray-500 mt-2">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // 取得 DOM 元素
         const viewWallRadio = document.getElementById('view-wall');
         const viewMapRadio = document.getElementById('view-map');
         const wallContainer = document.getElementById('wall-view-container');
         const mapContainer = document.getElementById('map-view-container');
         const mapElement = document.getElementById('map');
+        const form = document.getElementById('task-form');
+        const addBtn = document.getElementById('add-btn');
+        const closeBtn = document.getElementById('close-task');
+        const submitBtn = document.getElementById('submit-task');
 
         let map = null;
+        let markers = [];
         let isMapInitialized = false;
+
+        // === 從 Supabase 載入任務 ===
+        async function loadTasks() {
+            const { data: tasks, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            console.log("🟢 成功載入任務資料:", tasks.length, "筆");
+
+            wallContainer.innerHTML = "";
+            markers.forEach(m => map && map.removeLayer(m));
+            markers = [];
+
+            tasks.forEach(task => {
+                // 卡片
+                const card = document.createElement('div');
+                card.className = "task-card flex flex-col rounded-lg p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer";
+                card.style.backgroundColor = task.color || "#FFFACD";
+                card.innerHTML = `
+                    <div class="w-full aspect-video rounded-lg bg-cover bg-center" style="background-image:url('https://picsum.photos/seed/${task.id}/400/300')"></div>
+                    <div class="flex flex-col gap-1 pt-4">
+                        <p class="text-text-secondary text-sm font-medium">${task.distance || 'nearby'}</p>
+                        <p class="text-text-primary text-lg font-bold">${task.title}</p>
+                        <p class="text-text-secondary text-base">${task.description}</p>
+                    </div>`;
+                wallContainer.appendChild(card);
+
+                // 地圖標記
+                if (map && task.lat && task.lng) {
+                    const html = `<div class="map-marker-bubble" style="--marker-color:${task.color};background-color:${task.color};">${task.title}</div>`;
+                    const icon = L.divIcon({ className: '', html, iconAnchor: [50, 45] });
+                    const marker = L.marker([task.lat, task.lng], { icon }).addTo(map);
+                    markers.push(marker);
+                }
+            });
+        }
 
         // 地圖初始化
         function initMap() {
             if (isMapInitialized) return;
             isMapInitialized = true;
             const userLatLng = L.latLng(25.0330, 121.5654);
-            const requests = [
-                { title: "Pick up groceries", coords: L.latLng(25.0375, 121.5650), color: "#FFFACD" },
-                { title: "Water my plants", coords: L.latLng(25.0220, 121.5680), color: "#FFFACD" },
-                { title: "Help moving couch", coords: L.latLng(25.0350, 121.5450), color: "#D4F1F4" },
-                { title: "Dog Walking", coords: L.latLng(25.0150, 121.5600), color: "#FFDAB9" }
-            ];
-
             map = L.map(mapElement).setView(userLatLng, 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
-
             const userIcon = L.divIcon({
                 className: '',
                 html: `<div class="user-marker"><span class="material-symbols-outlined">person_pin</span></div>`,
@@ -236,12 +238,6 @@
                 iconAnchor: [20, 40]
             });
             L.marker(userLatLng, { icon: userIcon }).addTo(map);
-
-            requests.forEach(r => {
-                const html = `<div class="map-marker-bubble" style="--marker-color:${r.color};background-color:${r.color};">${r.title}</div>`;
-                const icon = L.divIcon({ className: '', html, iconAnchor: [50, 45] });
-                L.marker(r.coords, { icon }).addTo(map);
-            });
         }
 
         // 切換 Wall/Map
@@ -250,7 +246,10 @@
                 wallContainer.classList.add('hidden');
                 mapContainer.classList.remove('hidden');
                 initMap();
-                if (map) map.invalidateSize();
+                if (map) {
+                    map.invalidateSize();
+                    loadTasks();
+                }
             } else {
                 wallContainer.classList.remove('hidden');
                 mapContainer.classList.add('hidden');
@@ -259,15 +258,36 @@
 
         viewWallRadio.addEventListener('change', handleViewChange);
         viewMapRadio.addEventListener('change', handleViewChange);
-        handleViewChange();
 
-        // 點擊任務卡片 → 導向 task_detail.html 
-        document.querySelectorAll('.task-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const id = card.getAttribute('data-task-id');
-                window.location.href = `task_detail.html?id=${id}`;
-            });
+        // === 新增任務 ===
+        addBtn.addEventListener('click', () => form.classList.remove('hidden'));
+        closeBtn.addEventListener('click', () => form.classList.add('hidden'));
+        submitBtn.addEventListener('click', async () => {
+            const title = document.getElementById('task-title').value.trim();
+            const desc = document.getElementById('task-desc').value.trim();
+            if (!title) return alert("請輸入任務標題");
+
+            const newTask = {
+                user_id: 1,
+                title,
+                description: desc,
+                lat: 25.033 + Math.random() * 0.02,
+                lng: 121.565 + Math.random() * 0.02,
+                color: ["#FFFACD", "#FFDAB9", "#D4F1F4"][Math.floor(Math.random() * 3)],
+                distance: "nearby"
+            };
+
+            const { error } = await supabase.from('tasks').insert([newTask]);
+            if (error) alert("新增失敗：" + error.message);
+            else {
+                form.classList.add('hidden');
+                document.getElementById('task-title').value = "";
+                document.getElementById('task-desc').value = "";
+                await loadTasks();
+            }
         });
+
+        loadTasks();
     </script>
 </body>
 </html>
