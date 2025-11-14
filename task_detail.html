@@ -156,20 +156,7 @@
       document.getElementById("thanks-card-container").classList.remove("hidden");
       document.getElementById("thanks-message").textContent = t.message;
 
-      const emojis = parsePgArray(t.emojis);
-      const emojiBox = document.getElementById("thanks-emojis");
-      emojiBox.innerHTML = "";
-      emojis.forEach(e => {
-        const span = document.createElement("span");
-        span.textContent = e;
-        emojiBox.appendChild(span);
-      });
     }
-  }
-
-  function parsePgArray(str) {
-    if (!str) return [];
-    return str.replace("{","").replace("}","").split(",");
   }
 
   function timeAgo(timestamp) {

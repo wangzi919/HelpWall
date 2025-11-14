@@ -66,7 +66,14 @@
       window.location.href = 'main.html';
     });
     document.getElementById('guest-btn').addEventListener('click', () => {
-      window.location.href = 'main.html';
+      const userId = prompt("Enter your User ID:");
+
+      if (!userId || userId.trim() === "") {
+        alert("User ID cannot be empty.");
+        return;
+      }
+
+      window.location.href = `main.html?user_id=${encodeURIComponent(userId)}`;
     });
   </script>
 </body>

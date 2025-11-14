@@ -112,8 +112,8 @@
         <!-- App Bar -->
         <div class="sticky top-0 z-10 flex items-center justify-between bg-background-light/80 px-4 py-3 backdrop-blur-sm">
             <div class="flex size-12 shrink-0 items-center justify-start">
-                <div class="aspect-square size-10 rounded-full bg-cover bg-center" 
-                     style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBQYlQA11OnSNtFQvN0zcKx3cR7AxTbl7Wt9Vu2t7iPtEJIkhj0Tl0CNQN5ovPmGMTctD-_lWwr3WgURxHM6Rn-j9AIAP-HkPUPad89TSL4DhBp_tnv-6czGFxUn2JhXIOkE4MbgHOUpmKn5im4CZK2UTWhNnSOC-FtSigZk_9wSx1la6z2Qem_HHuzHNgej_o6IPBEObLDSCeNy4Jx3qfgsxFYFWpiRLEDWVonuKWGlHAC2sUcamXDybAo0dM5Nl187yd1iw8sLz7M')">
+                <div id="nav-user-avatar"
+                    class="aspect-square size-10 rounded-full bg-cover bg-center shadow-soft cursor-pointer">
                 </div>
             </div>
             <div class="flex items-center justify-center">
@@ -179,6 +179,8 @@
         const addBtn = document.getElementById('add-btn');
         const closeBtn = document.getElementById('close-task');
         const submitBtn = document.getElementById('submit-task');
+        const urlParams = new URLSearchParams(window.location.search);
+        const CURRENT_USER_ID = urlParams.get("user_id");
 
         let map = null;
         let markers = [];
@@ -213,7 +215,7 @@
                         <p class="text-text-secondary text-base">${task.description}</p>
                     </div>`;
 
-                // ⭐⭐⭐ 新增：點擊跳到該 task 的 detail 頁面 ⭐⭐⭐
+                // 點擊跳到該 task 的 detail 頁面 
                 card.addEventListener('click', () => {
                     window.location.href = `task_detail.html?id=${task.id}`;
                 });
@@ -227,11 +229,34 @@
                     const marker = L.marker([task.lat, task.lng], { icon }).addTo(map);
                     markers.push(marker);
 
-                    // ⭐⭐⭐ 新增：點 Marker 也能跳到 detail ⭐⭐⭐
+                    // 點 Marker 也能跳到 detail
                     marker.on('click', () => {
                         window.location.href = `task_detail.html?id=${task.id}`;
                     });
                 }
+            });
+        }
+        
+        // === 讀取登入使用者的頭像 ===
+        async function loadCurrentUser() {
+            const { data: user, error } = await supabase
+                .from('user')
+                .select('*')
+                .eq('id', CURRENT_USER_ID)
+                .single();
+
+            if (error) {
+                console.error("Failed to load user:", error);
+                return;
+            }
+
+            const avatar = document.getElementById("nav-user-avatar");
+            if (avatar && user.image_url) {
+                avatar.style.backgroundImage = `url('${user.image_url}')`;
+            }
+
+            avatar.addEventListener("click", () => {
+                window.location.href = `user_profile.html?user_id=${user.id}`;
             });
         }
 
@@ -300,6 +325,7 @@
             }
         });
 
+        loadCurrentUser();
         loadTasks();
     </script>
 </body>
