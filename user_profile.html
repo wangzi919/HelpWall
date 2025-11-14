@@ -238,7 +238,7 @@ async function loadUserRequests(id) {
       "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
 
     item.onclick = () =>
-      (window.location.href = `task_detail.html?id=${task.id}`);
+      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`);
 
     item.innerHTML = `
       <div class="flex items-center gap-4">

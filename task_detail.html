@@ -61,7 +61,7 @@
 
 <!-- Top Bar -->
 <div class="sticky top-0 z-10 flex items-center bg-background-light/80 dark:bg-background-dark/80 p-4 pb-2 justify-between backdrop-blur-sm">
-  <button onclick="window.location.href='main.html'" class="flex items-center justify-center rounded-full h-12 w-12 hover:bg-black/5 transition">
+  <button onclick="window.location.href=`main.html?user_id=${userId}`" class="flex items-center justify-center rounded-full h-12 w-12 hover:bg-black/5 transition">
     <span class="material-symbols-outlined text-3xl">arrow_back</span>
   </button>
   <h2 class="text-lg font-bold flex-1 text-center">Task Details</h2>
@@ -122,7 +122,8 @@
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const urlParams = new URLSearchParams(window.location.search);
-  const taskId = urlParams.get("id");
+  const taskId = urlParams.get("task_id");
+  const userId = urlParams.get("user_id");
 
   if (!taskId) console.error("❌ Missing task id in URL");
 
@@ -134,7 +135,7 @@
     if (!task) return;
 
     // 2. user
-    const { data: user } = await supabaseClient.from("users").select("*").eq("id", task.user_id).single();
+    const { data: user } = await supabaseClient.from("user").select("*").eq("id", task.user_id).single();
 
     // 3. task_detail
     const { data: detail } = await supabaseClient.from("task_detail").select("*").eq("task_id", id).single();

@@ -163,6 +163,7 @@
                 <h2 class="text-lg font-bold">Add New Help Task</h2>
                 <input id="task-title" placeholder="Title" class="border rounded-lg p-2" />
                 <textarea id="task-desc" placeholder="Description" class="border rounded-lg p-2"></textarea>
+                <input id="task-image-url" placeholder="Image URL (Optional)" class="border rounded-lg p-2" /> 
                 <button id="submit-task" class="bg-primary text-white rounded-lg py-2 hover:opacity-90">Submit</button>
                 <button id="close-task" class="text-sm text-gray-500 mt-2">Cancel</button>
             </div>
@@ -180,7 +181,7 @@
         const closeBtn = document.getElementById('close-task');
         const submitBtn = document.getElementById('submit-task');
         const urlParams = new URLSearchParams(window.location.search);
-        const CURRENT_USER_ID = urlParams.get("user_id");
+        const userId = urlParams.get("user_id");
 
         let map = null;
         let markers = [];
@@ -217,7 +218,7 @@
 
                 // 點擊跳到該 task 的 detail 頁面 
                 card.addEventListener('click', () => {
-                    window.location.href = `task_detail.html?id=${task.id}`;
+                    window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
                 });
 
                 wallContainer.appendChild(card);
@@ -231,7 +232,7 @@
 
                     // 點 Marker 也能跳到 detail
                     marker.on('click', () => {
-                        window.location.href = `task_detail.html?id=${task.id}`;
+                        window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
                     });
                 }
             });
@@ -242,7 +243,7 @@
             const { data: user, error } = await supabase
                 .from('user')
                 .select('*')
-                .eq('id', CURRENT_USER_ID)
+                .eq('id', userId)
                 .single();
 
             if (error) {
@@ -303,13 +304,16 @@
         submitBtn.addEventListener('click', async () => {
             const title = document.getElementById('task-title').value.trim();
             const desc = document.getElementById('task-desc').value.trim();
+            const imageUrl = document.getElementById('task-image-url').value.trim(); 
+            
             if (!title) return alert("請輸入任務標題");
 
             const newTask = {
-                user_id: 1,
+                user_id: userId,
                 title,
                 description: desc,
-                lat: 25.033 + Math.random() * 0.02,
+                image_url: imageUrl, 
+                lat: 25.033 + Math.random() * 0.02, // 注意：這裡之後要改成gps
                 lng: 121.565 + Math.random() * 0.02,
                 color: ["#FFFACD", "#FFDAB9", "#D4F1F4"][Math.floor(Math.random() * 3)],
                 distance: "nearby"
@@ -321,6 +325,7 @@
                 form.classList.add('hidden');
                 document.getElementById('task-title').value = "";
                 document.getElementById('task-desc').value = "";
+                document.getElementById('task-image-url').value = ""; 
                 await loadTasks();
             }
         });
