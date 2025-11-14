@@ -305,10 +305,12 @@
             const title = document.getElementById('task-title').value.trim();
             const desc = document.getElementById('task-desc').value.trim();
             const imageUrl = document.getElementById('task-image-url').value.trim(); 
+            const { data: { user } } = await supabase.auth.getUser();
             
             if (!title) return alert("請輸入任務標題");
 
             const newTask = {
+                user_uid: user.id, 
                 user_id: userId,
                 title,
                 description: desc,
