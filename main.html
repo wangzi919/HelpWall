@@ -186,13 +186,15 @@
 
         // === 從 Supabase 載入任務 ===
         async function loadTasks() {
-            const { data: tasks, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+            const { data: tasks, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .order('created_at', { ascending: false });
+
             if (error) {
                 console.error(error);
                 return;
             }
-
-            console.log("🟢 成功載入任務資料:", tasks.length, "筆");
 
             wallContainer.innerHTML = "";
             markers.forEach(m => map && map.removeLayer(m));
@@ -210,6 +212,12 @@
                         <p class="text-text-primary text-lg font-bold">${task.title}</p>
                         <p class="text-text-secondary text-base">${task.description}</p>
                     </div>`;
+
+                // ⭐⭐⭐ 新增：點擊跳到該 task 的 detail 頁面 ⭐⭐⭐
+                card.addEventListener('click', () => {
+                    window.location.href = `task_detail.html?id=${task.id}`;
+                });
+
                 wallContainer.appendChild(card);
 
                 // 地圖標記
@@ -218,6 +226,11 @@
                     const icon = L.divIcon({ className: '', html, iconAnchor: [50, 45] });
                     const marker = L.marker([task.lat, task.lng], { icon }).addTo(map);
                     markers.push(marker);
+
+                    // ⭐⭐⭐ 新增：點 Marker 也能跳到 detail ⭐⭐⭐
+                    marker.on('click', () => {
+                        window.location.href = `task_detail.html?id=${task.id}`;
+                    });
                 }
             });
         }
