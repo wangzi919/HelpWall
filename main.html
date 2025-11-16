@@ -164,7 +164,7 @@
                 <input id="task-title" placeholder="Title" class="border rounded-lg p-2" />
                 <textarea id="task-desc" placeholder="Description" class="border rounded-lg p-2"></textarea>
                 <input id="task-image-url" placeholder="Image URL (Optional)" class="border rounded-lg p-2" /> 
-                <button id="submit-task" class="bg-primary text-white rounded-lg py-2 hover:opacity-90">Submit</button>
+                <button id="submit-task" class="bg-blue-500 text-white rounded-lg py-2 hover:opacity-90">Submit</button>
                 <button id="close-task" class="text-sm text-gray-500 mt-2">Cancel</button>
             </div>
         </div>
@@ -203,20 +203,49 @@
             markers.forEach(m => map && map.removeLayer(m));
             markers = [];
 
-            tasks.forEach(task => {
-                // 卡片
+            for (const task of tasks) {
+
+                // 查詢任務媒合情況
+                const { data: assignment } = await supabase
+                    .from("task_assignment")
+                    .select("*")
+                    .eq("task_id", task.id)
+                    .maybeSingle();
+
+                // 依狀態判斷
+                const isTaken = assignment?.status === "in_progress";
+                const isCompleted = assignment?.status === "completed";
+
+                // 卡片 UI
                 const card = document.createElement('div');
                 card.className = "task-card flex flex-col rounded-lg p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer";
                 card.style.backgroundColor = task.color || "#FFFACD";
+
+                let statusBadge = "";
+                if (isCompleted) {
+                    statusBadge = `<span class="text-xs px-2 py-1 bg-blue-500 text-white rounded-full">已完成</span>`;
+                } else if (isTaken) {
+                    statusBadge = `<span class="text-xs px-2 py-1 bg-gray-400 text-white rounded-full">進行中</span>`;
+                } else {
+                    statusBadge = `<span class="text-xs px-2 py-1 bg-green-500 text-white rounded-full">可接任務</span>`;
+                }
+                
                 card.innerHTML = `
-                    <div class="w-full aspect-video rounded-lg bg-cover bg-center" style="background-image:url(${task.image_url})"></div>
+                    <div class="w-full aspect-video rounded-lg bg-cover bg-center"
+                        style="background-image:url(${task.image_url})"></div>
+
                     <div class="flex flex-col gap-1 pt-4">
-                        <p class="text-text-secondary text-sm font-medium">${task.distance || 'nearby'}</p>
+
+                        <div class="flex items-center gap-2">
+                            <p class="text-text-secondary text-sm font-medium">${task.distance || 'nearby'}</p>
+                            ${statusBadge}
+                        </div>
+
                         <p class="text-text-primary text-lg font-bold">${task.title}</p>
                         <p class="text-text-secondary text-base">${task.description}</p>
                     </div>`;
 
-                // 點擊跳到該 task 的 detail 頁面 
+                // 點擊跳到 task detail
                 card.addEventListener('click', () => {
                     window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
                 });
@@ -224,19 +253,28 @@
                 wallContainer.appendChild(card);
 
                 // 地圖標記
+                if (isCompleted) continue; // 地圖不顯示
                 if (map && task.lat && task.lng) {
-                    const html = `<div class="map-marker-bubble" style="--marker-color:${task.color};background-color:${task.color};">${task.title}</div>`;
+                    const html = `
+                        <div class="map-marker-bubble" 
+                            style="--marker-color:${task.color};
+                                    background-color:${isTaken ? '#A9A9A9' : task.color};
+                                    opacity:${isTaken ? 0.5 : 1};
+                            ">
+                            ${task.title}
+                        </div>`;
+
                     const icon = L.divIcon({ className: '', html, iconAnchor: [50, 45] });
                     const marker = L.marker([task.lat, task.lng], { icon }).addTo(map);
                     markers.push(marker);
 
-                    // 點 Marker 也能跳到 detail
                     marker.on('click', () => {
                         window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
                     });
                 }
-            });
+            }
         }
+
         
         // === 讀取登入使用者的頭像 ===
         async function loadCurrentUser() {

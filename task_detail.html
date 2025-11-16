@@ -24,6 +24,7 @@
           "accent-mint": "#D5F0E5",
           "accent-blue": "#C9E9FF",
           "accent-peach": "#FFDDC9",
+          "accent-peach": "#FFDDC9",
           "text-main": "#3D3522",
           "text-subtle": "#857E6B",
         },
@@ -99,16 +100,27 @@
     <div class="bg-accent-yellow p-6 rounded-lg shadow-soft flex flex-col items-center text-center gap-3">
       <h3 id="thanks-title" class="font-handwritten text-2xl">A Big Thank You!</h3>
       <p id="thanks-message" class="font-handwritten text-lg leading-snug"></p>
-      <div id="thanks-emojis" class="flex gap-2 text-2xl mt-2"></div>
     </div>
   </div>
 
 </main>
 
-<!-- Accept Button -->
-<div class="fixed bottom-0 left-0 w-full bg-background-light/80 dark:bg-background-dark/80 p-4 backdrop-blur-sm">
-  <button class="flex w-full items-center justify-center rounded-full h-14 bg-accent-mint text-lg font-bold shadow-soft hover:opacity-90">
-    Accept Help
+<!-- Accept / Complete Buttons -->
+<div class="fixed bottom-0 left-0 w-full p-4 bg-background-light dark:bg-background-dark">
+  <button id="acceptTaskBtn"
+      class="hidden flex w-full cursor-pointer items-center justify-center 
+             overflow-hidden rounded-full h-14 bg-accent-mint 
+             text-text-main gap-2 text-lg font-bold leading-normal tracking-wide 
+             shadow-soft hover:opacity-90">
+    Accept This Task
+  </button>
+
+  <button id="completeTaskBtn"
+      class="hidden mt-3 flex w-full cursor-pointer items-center justify-center 
+             overflow-hidden rounded-full h-14 bg-accent-peach 
+             text-text-main gap-2 text-lg font-bold leading-normal tracking-wide 
+             shadow-soft hover:opacity-90">
+    Mark as Completed
   </button>
 </div>
 
@@ -125,25 +137,20 @@
   const taskId = urlParams.get("task_id");
   const userId = urlParams.get("user_id");
 
-  if (!taskId) console.error("❌ Missing task id in URL");
+  if (!taskId) console.error("❌ Missing task_id in URL");
 
   loadTask(taskId);
+  checkButtons();
 
+  /* -------------------- Load Task ---------------------- */
   async function loadTask(id) {
-    // 1. task
     const { data: task } = await supabaseClient.from("tasks").select("*").eq("id", id).single();
     if (!task) return;
 
-    // 2. user
     const { data: user } = await supabaseClient.from("user").select("*").eq("id", task.user_id).single();
-
-    // 3. task_detail
     const { data: detail } = await supabaseClient.from("task_detail").select("*").eq("task_id", id).single();
-
-    // 4. thanks_card
     const { data: thanks } = await supabaseClient.from("thanks_card").select("*").eq("task_id", id);
 
-    // --- UI 填入 ---
     document.getElementById("user-name").textContent = user?.name || "Unknown";
     document.getElementById("user-img").style.backgroundImage = `url('${user?.image_url || ""}')`;
     document.getElementById("post-time").textContent = timeAgo(task.created_at);
@@ -156,7 +163,6 @@
       const t = thanks[0];
       document.getElementById("thanks-card-container").classList.remove("hidden");
       document.getElementById("thanks-message").textContent = t.message;
-
     }
   }
 
@@ -167,6 +173,87 @@
     if (diff < 86400) return Math.floor(diff/3600) + " hours ago";
     return Math.floor(diff/86400) + " days ago";
   }
+
+  /* -------------------- Accept Task ---------------------- */
+  async function acceptTask() {
+    if (!userId) return alert("Please login first.");
+
+    const { data: existing } = await supabaseClient
+      .from("task_assignment")
+      .select("*")
+      .eq("task_id", taskId)
+      .eq("status", "in_progress")
+      .maybeSingle();
+
+    if (existing) return alert("This task is already taken.");
+
+    const { error } = await supabaseClient
+      .from("task_assignment")
+      .insert({
+        task_id: taskId,
+        helper_id: userId,
+        status: "in_progress",
+      });
+
+    if (error) return alert("Error accepting task.");
+
+    alert("Task accepted!");
+    window.location.reload();
+  }
+
+  /* -------------------- Complete Task ---------------------- */
+  async function completeTask() {
+    const { error } = await supabaseClient
+      .from("task_assignment")
+      .update({ status: "completed" })
+      .eq("task_id", taskId)
+      .eq("helper_id", userId);
+
+    if (error) return alert("Error marking complete.");
+
+    alert("Task marked as completed!");
+    window.location.reload();
+  }
+
+  /* -------------------- Show Correct Buttons ---------------------- */
+  async function checkButtons() {
+    if (!userId) return;
+
+    // 讀取任務本身，取得 task.user_id
+    const { data: task } = await supabaseClient
+      .from("tasks")
+      .select("*")
+      .eq("id", taskId)
+      .single();
+
+    // 讀取媒合資訊
+    const { data: assignment } = await supabaseClient
+      .from("task_assignment")
+      .select("*")
+      .eq("task_id", taskId)
+      .maybeSingle();
+
+    const acceptBtn = document.getElementById("acceptTaskBtn");
+    const completeBtn = document.getElementById("completeTaskBtn");
+
+    /* === Accept Task Button === */
+    if (!assignment && userId != task.user_id) {
+      // 沒人接 AND 不是發布者 → 可以接
+      acceptBtn.classList.remove("hidden");
+    }
+
+    /* === Complete Task Button (by creator only) === */
+    if (
+      assignment &&
+      assignment.status === "in_progress" &&
+      userId == task.user_id     // 任務的發布者
+    ) {
+      completeBtn.classList.remove("hidden");
+    }
+  }
+
+  document.getElementById("acceptTaskBtn").addEventListener("click", acceptTask);
+  document.getElementById("completeTaskBtn").addEventListener("click", completeTask);
 </script>
 
 </body>

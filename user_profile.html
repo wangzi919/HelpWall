@@ -67,7 +67,7 @@
     <h2 class="text-text-main text-lg font-bold flex-1 text-center">My Profile</h2>
 
     <div class="flex w-12 items-center justify-end">
-      <button class="flex items-center justify-center h-12 text-text-main">
+      <button id="btn-settings" class="flex items-center justify-center h-12 text-text-main">
         <span class="material-symbols-outlined">settings</span>
       </button>
     </div>
@@ -93,12 +93,13 @@
         </div>
       </div>
 
-      <button class="flex cursor-pointer items-center justify-center rounded-full h-12 px-6 bg-accent-yellow text-text-main font-bold shadow-soft border border-yellow-200 w-full max-w-[480px]">
+      <button id="btn-edit" class="flex cursor-pointer items-center justify-center rounded-full h-12 px-6 bg-accent-yellow text-text-main font-bold shadow-soft border border-yellow-200 w-full max-w-[480px]">
         Edit Profile
       </button>
 
     </div>
   </div>
+
   <!-- Stats -->
   <div class="flex flex-wrap gap-4 p-4">
     <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-5 bg-accent-mint shadow-soft items-center text-center">
@@ -140,32 +141,47 @@
   <div id="task-list" class="flex flex-col gap-3 p-4">
     <!-- JS will insert tasks here -->
   </div>
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+</div>
+
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ---------------------------
+   Configuration / Init
+----------------------------*/
 const SUPABASE_URL = "https://zyeykllnefwvlokrecbv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5ZXlrbGxuZWZ3dmxva3JlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDg2MjQsImV4cCI6MjA3ODYyNDYyNH0.zTx11lXOPAdeakTXQch9OEO4c7rfhMImNaKDz4G9DIs";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// URL ?id=xx
+// URL ?user_id=xx
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get("user_id");
 
+/* Basic guard */
 if (!userId) {
-  console.error("❌ No user id in URL");
+  console.error("No user_id provided in URL. Example: user_profile.html?user_id=1");
+  // We continue but some features will show empty state.
 }
 
+/* ---------------------------
+   Loaders
+----------------------------*/
 loadUserProfile(userId);
 loadUserStats(userId);
-loadUserRequests(userId);
+loadUserRequests(userId); // default tab
+// loadUserHelp will be called when user clicks "My Help"
 
 /* -------------------------------
    1. 讀取使用者資料
 -------------------------------- */
 async function loadUserProfile(id) {
+  if (!id) {
+    document.getElementById("profile-name").textContent = "Guest";
+    return;
+  }
+
   const { data: user, error } = await sb
     .from("user")
     .select("*")
@@ -173,19 +189,14 @@ async function loadUserProfile(id) {
     .single();
 
   if (error) {
-    console.error("❌ Failed loading user:", error);
+    console.error("Failed loading user:", error);
+    document.getElementById("profile-name").textContent = "Unknown";
     return;
   }
 
-  // 頭像
-  document.getElementById("profile-avatar").style.backgroundImage =
-    `url('${user.image_url}')`;
-
-  // 名字
-  document.getElementById("profile-name").textContent = user.name;
-
-  // 簡介（若沒有就留空）
-  document.getElementById("profile-bio").textContent = user.bio ?? "";
+  document.getElementById("profile-avatar").style.backgroundImage = `url('${user.image_url || "https://placehold.co/200x200"}')`;
+  document.getElementById("profile-name").textContent = user.name || "Unnamed";
+  document.getElementById("profile-bio").textContent = user.bio || "";
 }
 
 /* -------------------------------
@@ -193,44 +204,73 @@ async function loadUserProfile(id) {
 -------------------------------- */
 async function loadUserStats(id) {
   // Requests Made
-  const { count: requestsCount } = await sb
-    .from("tasks")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", id);
-  document.getElementById("stat-requests").textContent = requestsCount || 0;
+  try {
+    const { count: requestsCount, error: reqErr } = await sb
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", id);
 
-  // Help Given
-  const { count: helpCount } = await sb
-    .from("comments")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", id);
-  document.getElementById("stat-help-given").textContent = helpCount || 0;
+    if (reqErr) throw reqErr;
+    document.getElementById("stat-requests").textContent = requestsCount || 0;
+  } catch (e) {
+    console.error("Failed to load requests count:", e);
+    document.getElementById("stat-requests").textContent = "0";
+  }
 
-  // Thank Yous
-  const { count: thanksCount } = await sb
-    .from("thanks_card")
-    .select("*", { count: "exact", head: true })
-    .eq("receiver_id", id);
-  document.getElementById("stat-thanks").textContent = thanksCount || 0;
+  // Help Given = number of completed assignments where helper_id = id
+  try {
+    const { count: helpCount, error: helpErr } = await sb
+      .from("task_assignment")
+      .select("*", { count: "exact", head: true })
+      .eq("helper_id", id)
+      .eq("status", "completed");
+
+    if (helpErr) throw helpErr;
+    document.getElementById("stat-help-given").textContent = helpCount || 0;
+  } catch (e) {
+    console.error("Failed to load help given count:", e);
+    document.getElementById("stat-help-given").textContent = "0";
+  }
+
+  // Thank Yous (received)
+  try {
+    const { count: thanksCount, error: thanksErr } = await sb
+      .from("thanks_card")
+      .select("*", { count: "exact", head: true })
+      .eq("receiver_id", id);
+
+    if (thanksErr) throw thanksErr;
+    document.getElementById("stat-thanks").textContent = thanksCount || 0;
+  } catch (e) {
+    console.error("Failed to load thanks count:", e);
+    document.getElementById("stat-thanks").textContent = "0";
+  }
 }
 
 /* -------------------------------
-   3. 我的 Requests
+   3. 我的 Requests (發佈過的任務)
 -------------------------------- */
 async function loadUserRequests(id) {
+  setActiveTab("requests");
   const { data: tasks, error } = await sb
     .from("tasks")
     .select("*")
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 
+  const container = document.getElementById("task-list");
+  container.innerHTML = "";
+
   if (error) {
-    console.error("❌ Failed loading tasks:", error);
+    console.error("Failed loading tasks:", error);
+    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading your requests.</p>`;
     return;
   }
 
-  const container = document.getElementById("task-list");
-  container.innerHTML = "";
+  if (!tasks || tasks.length === 0) {
+    container.innerHTML = `<p class="text-gray-500 text-center py-6">You haven't posted any requests yet.</p>`;
+    return;
+  }
 
   tasks.forEach(task => {
     const item = document.createElement("div");
@@ -242,11 +282,11 @@ async function loadUserRequests(id) {
 
     item.innerHTML = `
       <div class="flex items-center gap-4">
-        <div class="flex items-center justify-center rounded-lg bg-accent-yellow shrink-0 size-12">
+        <div class="flex items-center justify-center rounded-lg bg-accent-yellow shrink-0 size-12 w-12 h-12">
           <span class="material-symbols-outlined text-text-main">task</span>
         </div>
         <div class="flex flex-col justify-center">
-          <p class="text-text-main text-base font-bold">${task.title}</p>
+          <p class="text-text-main text-base font-bold">${escapeHtml(task.title)}</p>
           <p class="text-gray-500 text-sm">${timeAgo(task.created_at)}</p>
         </div>
       </div>
@@ -260,10 +300,134 @@ async function loadUserRequests(id) {
   });
 }
 
+/* -------------------------------
+   4. 我的 Help (我完成或幫過的任務)
+   show tasks where task_assignment.helper_id = userId and status = 'completed'
+-------------------------------- */
+async function loadUserHelp(id) {
+  setActiveTab("help");
+  const { data: assignments, error: assignErr } = await sb
+    .from("task_assignment")
+    .select("task_id, completed_at, status")
+    .eq("helper_id", id)
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false });
+
+  const container = document.getElementById("task-list");
+  container.innerHTML = "";
+
+  if (assignErr) {
+    console.error("Failed loading assignments:", assignErr);
+    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading your completed tasks.</p>`;
+    return;
+  }
+
+  if (!assignments || assignments.length === 0) {
+    container.innerHTML = `<p class="text-gray-500 text-center py-6">No completed tasks yet.</p>`;
+    return;
+  }
+
+  // collect task ids
+  const taskIds = assignments.map(a => a.task_id);
+
+  const { data: tasks, error: tasksErr } = await sb
+    .from("tasks")
+    .select("*")
+    .in("id", taskIds)
+    .order("created_at", { ascending: false });
+
+  if (tasksErr) {
+    console.error("Failed loading tasks for assignments:", tasksErr);
+    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading tasks for your completed assignments.</p>`;
+    return;
+  }
+
+  tasks.forEach(task => {
+    const item = document.createElement("div");
+    item.className =
+      "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
+
+    item.onclick = () =>
+      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`);
+
+    item.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="flex items-center justify-center rounded-lg bg-accent-mint shrink-0 size-12 w-12 h-12">
+          <span class="material-symbols-outlined text-text-main">volunteer_activism</span>
+        </div>
+        <div class="flex flex-col justify-center">
+          <p class="text-text-main text-base font-bold">${escapeHtml(task.title)}</p>
+          <p class="text-gray-500 text-sm">Completed · ${timeAgo(task.created_at)}</p>
+        </div>
+      </div>
+
+      <div class="shrink-0 flex items-center justify-center text-gray-400 size-7">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </div>
+    `;
+
+    container.appendChild(item);
+  });
+}
+
+/* -------------------------------
+   Utility / Tabs / Helpers
+-------------------------------- */
+function setActiveTab(which) {
+  const tabRequests = document.getElementById("tab-my-requests");
+  const tabHelp = document.getElementById("tab-my-help");
+
+  if (which === "requests") {
+    tabRequests.classList.add("border-b-text-main", "text-text-main");
+    tabHelp.classList.remove("border-b-text-main", "text-text-main");
+    tabHelp.classList.add("text-gray-500");
+  } else {
+    tabHelp.classList.add("border-b-text-main", "text-text-main");
+    tabRequests.classList.remove("border-b-text-main", "text-text-main");
+    tabRequests.classList.add("text-gray-500");
+  }
+}
+
+document.getElementById("tab-my-requests").addEventListener("click", () => {
+  loadUserRequests(userId);
+});
+
+document.getElementById("tab-my-help").addEventListener("click", () => {
+  loadUserHelp(userId);
+});
+
 function timeAgo(ts) {
+  if (!ts) return "";
   const diff = (Date.now() - new Date(ts)) / 1000;
+  if (diff < 60) return Math.floor(diff) + " sec ago";
   if (diff < 3600) return Math.floor(diff / 60) + " min ago";
   if (diff < 86400) return Math.floor(diff / 3600) + " hr ago";
   return Math.floor(diff / 86400) + " days ago";
 }
+
+/* Basic html-escape for simple safety */
+function escapeHtml(s) {
+  if (!s) return "";
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+/* -------------------------------
+   Optional: Edit/Profile Settings handlers (stubs)
+-------------------------------- */
+document.getElementById("btn-edit").addEventListener("click", () => {
+  // You can expand this later to show a profile edit modal
+  alert("Edit profile UI not implemented yet.");
+});
+
+document.getElementById("btn-settings").addEventListener("click", () => {
+  alert("Settings UI not implemented yet.");
+});
 </script>
+
+</body>
+</html>
