@@ -100,6 +100,17 @@
     </div>
   </div>
 
+  <!-- Time Credit Display -->
+  <div class="flex justify-center w-full mt-2">
+    <div class="flex items-center gap-3 bg-accent-mint px-5 py-3 rounded-xl shadow-soft border border-green-200">
+      <span class="material-symbols-outlined text-green-700 text-3xl">account_balance_wallet</span>
+      <div class="flex flex-col">
+        <p class="text-text-main text-sm font-bold">Time Credits</p>
+        <p id="time-credit" class="text-green-700 text-2xl font-extrabold">0</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Stats -->
   <div class="flex flex-wrap gap-4 p-4">
     <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-5 bg-accent-mint shadow-soft items-center text-center">
@@ -197,6 +208,7 @@ async function loadUserProfile(id) {
   document.getElementById("profile-avatar").style.backgroundImage = `url('${user.image_url || "https://placehold.co/200x200"}')`;
   document.getElementById("profile-name").textContent = user.name || "Unnamed";
   document.getElementById("profile-bio").textContent = user.bio || "";
+  document.getElementById("time-credit").textContent = user.time_credit ?? 0;
 }
 
 /* -------------------------------
