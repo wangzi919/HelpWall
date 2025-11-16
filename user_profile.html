@@ -251,28 +251,37 @@ async function loadUserStats(id) {
    3. 我的 Requests (發佈過的任務)
 -------------------------------- */
 async function loadUserRequests(id) {
-  setActiveTab("requests");
   const { data: tasks, error } = await sb
     .from("tasks")
     .select("*")
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 
+  if (error) {
+    console.error("❌ Failed loading tasks:", error);
+    return;
+  }
+
   const container = document.getElementById("task-list");
   container.innerHTML = "";
 
-  if (error) {
-    console.error("Failed loading tasks:", error);
-    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading your requests.</p>`;
-    return;
-  }
+  for (const task of tasks) {
+    // 查詢 assignment 狀況
+    const { data: assignment } = await sb
+      .from("task_assignment")
+      .select("status, helper_id")
+      .eq("task_id", task.id)
+      .maybeSingle();
 
-  if (!tasks || tasks.length === 0) {
-    container.innerHTML = `<p class="text-gray-500 text-center py-6">You haven't posted any requests yet.</p>`;
-    return;
-  }
+    let statusLabel = "";
+    if (!assignment) {
+      statusLabel = `<span class="text-red-500 font-bold">Unassigned</span>`;
+    } else if (assignment.status === "in_progress") {
+      statusLabel = `<span class="text-yellow-500 font-bold">In Progress</span>`;
+    } else if (assignment.status === "completed") {
+      statusLabel = `<span class="text-green-600 font-bold">Completed</span>`;
+    }
 
-  tasks.forEach(task => {
     const item = document.createElement("div");
     item.className =
       "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
@@ -282,12 +291,13 @@ async function loadUserRequests(id) {
 
     item.innerHTML = `
       <div class="flex items-center gap-4">
-        <div class="flex items-center justify-center rounded-lg bg-accent-yellow shrink-0 size-12 w-12 h-12">
+        <div class="flex items-center justify-center rounded-lg bg-accent-yellow shrink-0 size-12">
           <span class="material-symbols-outlined text-text-main">task</span>
         </div>
         <div class="flex flex-col justify-center">
-          <p class="text-text-main text-base font-bold">${escapeHtml(task.title)}</p>
+          <p class="text-text-main text-base font-bold">${task.title}</p>
           <p class="text-gray-500 text-sm">${timeAgo(task.created_at)}</p>
+          <p class="text-sm mt-1">${statusLabel}</p>
         </div>
       </div>
 
@@ -297,67 +307,54 @@ async function loadUserRequests(id) {
     `;
 
     container.appendChild(item);
-  });
+  }
 }
 
 /* -------------------------------
    4. 我的 Help (我完成或幫過的任務)
    show tasks where task_assignment.helper_id = userId and status = 'completed'
 -------------------------------- */
-async function loadUserHelp(id) {
-  setActiveTab("help");
-  const { data: assignments, error: assignErr } = await sb
+async function loadMyHelp(id) {
+  const { data: assignments, error } = await sb
     .from("task_assignment")
-    .select("task_id, completed_at, status")
+    .select("task_id, status, tasks(title, created_at)")
     .eq("helper_id", id)
-    .eq("status", "completed")
-    .order("completed_at", { ascending: false });
+    .order("accepted_at", { ascending: false });
+
+  if (error) {
+    console.error("❌ Failed loading help tasks:", error);
+    return;
+  }
 
   const container = document.getElementById("task-list");
   container.innerHTML = "";
 
-  if (assignErr) {
-    console.error("Failed loading assignments:", assignErr);
-    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading your completed tasks.</p>`;
-    return;
-  }
+  assignments.forEach(row => {
+    const task = row.tasks;
 
-  if (!assignments || assignments.length === 0) {
-    container.innerHTML = `<p class="text-gray-500 text-center py-6">No completed tasks yet.</p>`;
-    return;
-  }
+    let statusLabel = "";
+    if (row.status === "in_progress") {
+      statusLabel = `<span class="text-yellow-500 font-bold">In Progress</span>`;
+    } else if (row.status === "completed") {
+      statusLabel = `<span class="text-green-600 font-bold">Completed</span>`;
+    }
 
-  // collect task ids
-  const taskIds = assignments.map(a => a.task_id);
-
-  const { data: tasks, error: tasksErr } = await sb
-    .from("tasks")
-    .select("*")
-    .in("id", taskIds)
-    .order("created_at", { ascending: false });
-
-  if (tasksErr) {
-    console.error("Failed loading tasks for assignments:", tasksErr);
-    container.innerHTML = `<p class="text-gray-500 text-center py-6">Failed loading tasks for your completed assignments.</p>`;
-    return;
-  }
-
-  tasks.forEach(task => {
     const item = document.createElement("div");
     item.className =
       "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
 
     item.onclick = () =>
-      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`);
+      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${row.task_id}`);
 
     item.innerHTML = `
       <div class="flex items-center gap-4">
-        <div class="flex items-center justify-center rounded-lg bg-accent-mint shrink-0 size-12 w-12 h-12">
+        <div class="flex items-center justify-center rounded-lg bg-accent-mint shrink-0 size-12">
           <span class="material-symbols-outlined text-text-main">volunteer_activism</span>
         </div>
         <div class="flex flex-col justify-center">
-          <p class="text-text-main text-base font-bold">${escapeHtml(task.title)}</p>
-          <p class="text-gray-500 text-sm">Completed · ${timeAgo(task.created_at)}</p>
+          <p class="text-text-main text-base font-bold">${task.title}</p>
+          <p class="text-gray-500 text-sm">${timeAgo(task.created_at)}</p>
+          <p class="text-sm mt-1">${statusLabel}</p>
         </div>
       </div>
 
@@ -373,28 +370,32 @@ async function loadUserHelp(id) {
 /* -------------------------------
    Utility / Tabs / Helpers
 -------------------------------- */
-function setActiveTab(which) {
-  const tabRequests = document.getElementById("tab-my-requests");
-  const tabHelp = document.getElementById("tab-my-help");
-
-  if (which === "requests") {
-    tabRequests.classList.add("border-b-text-main", "text-text-main");
-    tabHelp.classList.remove("border-b-text-main", "text-text-main");
-    tabHelp.classList.add("text-gray-500");
-  } else {
-    tabHelp.classList.add("border-b-text-main", "text-text-main");
-    tabRequests.classList.remove("border-b-text-main", "text-text-main");
-    tabRequests.classList.add("text-gray-500");
-  }
-}
-
 document.getElementById("tab-my-requests").addEventListener("click", () => {
+  setActiveTab("requests");
   loadUserRequests(userId);
 });
 
 document.getElementById("tab-my-help").addEventListener("click", () => {
-  loadUserHelp(userId);
+  setActiveTab("help");
+  loadMyHelp(userId);
 });
+
+function setActiveTab(tab) {
+  const tab1 = document.getElementById("tab-my-requests");
+  const tab2 = document.getElementById("tab-my-help");
+
+  if (tab === "requests") {
+    tab1.classList.add("border-b-text-main", "text-text-main");
+    tab1.classList.remove("text-gray-500");
+    tab2.classList.remove("border-b-text-main", "text-text-main");
+    tab2.classList.add("text-gray-500");
+  } else {
+    tab2.classList.add("border-b-text-main", "text-text-main");
+    tab2.classList.remove("text-gray-500");
+    tab1.classList.remove("border-b-text-main", "text-text-main");
+    tab1.classList.add("text-gray-500");
+  }
+}
 
 function timeAgo(ts) {
   if (!ts) return "";
