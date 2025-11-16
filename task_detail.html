@@ -203,15 +203,55 @@
 
   /* -------------------- Complete Task ---------------------- */
   async function completeTask() {
-    const { error } = await supabaseClient
+    // 1. 取得任務資訊（包含 reward）
+    const { data: task, error: taskError } = await supabaseClient
+      .from("task_detail")
+      .select("time_credit")
+      .eq("id", taskId)
+      .single();
+
+    if (taskError) {
+      console.error(taskError);
+      return alert("無法讀取任務資料");
+    }
+
+    const time_credit = task.time_credit || 0;
+
+    // 2. 找到該任務的 assignment（知道 helper 是誰）
+    const { data: assignment, error: assignError } = await supabaseClient
+      .from("task_assignment")
+      .select("helper_id")
+      .eq("task_id", taskId)
+      .single();
+
+    if (assignError || !assignment) {
+      console.error(assignError);
+      return alert("找不到任務負責人");
+    }
+
+    const helperId = assignment.helper_id;
+
+    // 3. 直接更新 users.time_credit = time_credit + reward
+    const { error: creditError } = await supabaseClient
+      .rpc("increment_credit", {user_id: helperId, amount: time_credit});
+
+    if (creditError) {
+      alert("增加時間幣失敗：" + creditError.message);
+      return;
+    }
+
+    // 4. 把任務標記為完成
+    const { error: statusError } = await supabaseClient
       .from("task_assignment")
       .update({ status: "completed" })
-      .eq("task_id", taskId)
-      .eq("helper_id", userId);
+      .eq("task_id", taskId);
 
-    if (error) return alert("Error marking complete.");
+    if (statusError) {
+      console.error(statusError);
+      return alert("Error marking complete.");
+    }
 
-    alert("Task marked as completed!");
+    alert("任務已完成！時間幣已發給協助者！");
     window.location.reload();
   }
 

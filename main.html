@@ -344,30 +344,61 @@
             const desc = document.getElementById('task-desc').value.trim();
             const imageUrl = document.getElementById('task-image-url').value.trim(); 
             const { data: { user } } = await supabase.auth.getUser();
-            
+
             if (!title) return alert("請輸入任務標題");
 
             const newTask = {
-                user_uid: user.id, 
+                user_uid: user.id,
                 user_id: userId,
                 title,
                 description: desc,
-                image_url: imageUrl, 
-                lat: 25.033 + Math.random() * 0.02, // 注意：這裡之後要改成gps
+                image_url: imageUrl,
+                lat: 25.033 + Math.random() * 0.02,
                 lng: 121.565 + Math.random() * 0.02,
                 color: ["#FFFACD", "#FFDAB9", "#D4F1F4"][Math.floor(Math.random() * 3)],
                 distance: "nearby"
             };
 
-            const { error } = await supabase.from('tasks').insert([newTask]);
-            if (error) alert("新增失敗：" + error.message);
-            else {
-                form.classList.add('hidden');
-                document.getElementById('task-title').value = "";
-                document.getElementById('task-desc').value = "";
-                document.getElementById('task-image-url').value = ""; 
-                await loadTasks();
+            // === 1. 新增 tasks 並取得 task id ===
+            const { data: insertedTask, error: taskError } = await supabase
+                .from("tasks")
+                .insert([newTask])
+                .select()
+                .single();
+
+            if (taskError) {
+                alert("新增失敗：" + taskError.message);
+                return;
             }
+
+            const taskId = insertedTask.id;
+
+            // === 2. 在 task_detail 建立 row ===
+            const detailRow = {
+                task_id: taskId,
+                full_description: null,
+                contact_method: null,
+                excepted_time: "10 minutes",
+                time_credit: 2
+            };
+
+            const { error: detailError } = await supabase
+                .from("task_detail")
+                .insert([detailRow]);
+
+            if (detailError) {
+                console.error(detailError);
+                alert("task 建立成功，但新增 task_detail 失敗");
+                return;
+            }
+
+            // === 3. UI reset ===
+            form.classList.add('hidden');
+            document.getElementById('task-title').value = "";
+            document.getElementById('task-desc').value = "";
+            document.getElementById('task-image-url').value = "";
+
+            await loadTasks();
         });
 
         loadCurrentUser();
