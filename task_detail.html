@@ -90,7 +90,7 @@
 
       <!-- Expected Time tag -->
       <span id="expected-time-box"
-            class="px-3 py-1 rounded-full text-sm font-bold bg-accent-mint text-text-main whitespace-nowrap">
+            class="px-3 py-1 rounded-full text-sm font-bold bg-accent-mint text-text-main whitespace-nowrap cursor-pointer">
         10 minutes
       </span>
 
@@ -176,6 +176,30 @@
       <input id="edit-img-input" class="border p-2 rounded-lg"/>
       <button onclick="saveImageUrl()" class="bg-primary text-white rounded-lg py-2">Save</button>
       <button onclick="closeEditImage()" class="text-sm text-gray-500">Cancel</button>
+  </div>
+</div>
+
+<!-- Expected Time Picker Modal -->
+<div id="time-picker-modal"
+     class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[999]">
+
+  <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl w-72 shadow-xl flex flex-col gap-3">
+
+    <h2 class="text-lg font-bold mb-2">Select Expected Time</h2>
+
+    <div class="flex flex-col gap-2">
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="5">5 minutes</button>
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="10">10 minutes</button>
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="15">15 minutes</button>
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="20">20 minutes</button>
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="25">25 minutes</button>
+      <button class="time-option px-4 py-2 rounded-lg bg-accent-mint" data-minute="30">30 minutes</button>
+    </div>
+
+    <button onclick="closeTimePicker()"
+            class="mt-4 px-4 py-2 rounded-full bg-gray-300 dark:bg-zinc-700">
+      Cancel
+    </button>
   </div>
 </div>
 
@@ -478,18 +502,16 @@
       const isOwner = userId == taskOwnerId;
       const isAssigned = assignmentData && assignmentData.length > 0;
 
-      console.log("--- 編輯權限檢查結果 ---");
-      console.log("是否為發布者 (isOwner):", isOwner);
-      console.log("任務是否已被接受 (isAssigned):", isAssigned);
-      console.log("預期結果 (isOwner && !isAssigned):", isOwner && !isAssigned);
-      console.log("------------------------");  
-
+      // --- 同時控制 Edit Buttons + 時間按鈕 ---
       if (isOwner && !isAssigned) {
           showEditButtons();
+          enableTimeEditing();
+      } else {
+          disableTimeEditing();
       }
   }
 
-  // 輔助函式：顯示編輯按鈕
+  /* -------------------- 執行刪除 ---------------------- */
   function showEditButtons() {
       document.getElementById('edit-desc-button').classList.remove('hidden');
       document.getElementById('edit-image-button').classList.remove('hidden');
@@ -504,7 +526,6 @@
       document.getElementById("delete-modal").classList.add("hidden");
   }
 
-  // 執行刪除
   async function confirmDeleteTask() {
       if (!userId) return;
 
@@ -526,6 +547,58 @@
       closeDeleteConfirmation();
       window.location.href = `main.html?user_id=${userId}`;
   }
+
+  /* -------------------- Edit expected time ---------------------- */
+  document.getElementById("expected-time-box").onclick = () => {
+    document.getElementById("time-picker-modal").classList.remove("hidden");
+  };
+
+  function closeTimePicker() {
+    document.getElementById("time-picker-modal").classList.add("hidden");
+  }
+
+  function disableTimeEditing() {
+      const timeButton = document.getElementById("expected-time-box");
+      if (timeButton) {
+          timeButton.classList.add("opacity-40", "cursor-not-allowed");
+          timeButton.onclick = null;  // 取消點擊
+      }
+  }
+
+  function enableTimeEditing() {
+      const timeButton = document.getElementById("expected-time-box");
+      if (timeButton) {
+          timeButton.classList.remove("opacity-40", "cursor-not-allowed");
+          timeButton.onclick = openTimePicker;  
+      }
+  }
+
+  document.querySelectorAll(".time-option").forEach(btn => {
+    btn.addEventListener("click", async () => {
+
+      const minutes = parseInt(btn.dataset.minute);
+      const time_credit = minutes / 5; // 你的規則：每 5 min = 1 credit
+
+      // 更新 UI
+      document.getElementById("expected-time-box").textContent = `${minutes} minutes`;
+      document.getElementById("reward-box").innerHTML = `+${time_credit} <span class="text-lg">⏱</span>`;
+
+      // 更新到資料庫
+      const { error } = await supabaseClient
+        .from("task_detail")
+        .update({
+          expected_time: `${minutes} minutes`,
+          time_credit: time_credit
+        })
+        .eq("task_id", taskId);
+
+      if (error) {
+        alert("更新失敗：" + error.message);
+      }
+
+      closeTimePicker();
+    });
+  });
 
   document.getElementById("acceptTaskBtn").addEventListener("click", acceptTask);
   document.getElementById("completeTaskBtn").addEventListener("click", completeTask);
