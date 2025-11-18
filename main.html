@@ -318,23 +318,38 @@
                 window.location.href = `user_profile.html?user_id=${user.id}`;
             });
         }
-
-        // 地圖初始化
+        
         function initMap() {
             if (isMapInitialized) return;
             isMapInitialized = true;
+
             const userLatLng = L.latLng(25.0330, 121.5654);
-            map = L.map(mapElement).setView(userLatLng, 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+            map = L.map(mapElement, {
+                dragging: false,          // 不能拖曳 → 保持中心
+                scrollWheelZoom: true,    // 可以滾輪縮放
+                doubleClickZoom: true,    // 可以雙擊放大
+                touchZoom: true,          // 手機可以縮放
+                zoomControl: true,        // 顯示 + -
+            }).setView(userLatLng, 14);
+
+            L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
+
             const userIcon = L.divIcon({
                 className: '',
                 html: `<div class="user-marker"><span class="material-symbols-outlined">person_pin</span></div>`,
                 iconSize: [40, 40],
                 iconAnchor: [20, 40]
             });
+
             L.marker(userLatLng, { icon: userIcon }).addTo(map);
+
+            // ⭐ 每次縮放後強制回到 user 中心
+            map.on('zoomend', () => {
+                map.setView(userLatLng, map.getZoom(), { animate: false });
+            });
         }
 
         // 切換 Wall/Map
