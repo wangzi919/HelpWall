@@ -83,9 +83,10 @@
   </div>
 
   <!-- Task Card -->
-  <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-soft flex flex-col gap-4">
+  <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-soft flex flex-col gap-4 relative">
     <h1 id="task-title" class="text-[28px] font-extrabold leading-tight">Loading...</h1>
     <p id="task-desc" class="text-base leading-relaxed">Loading description...</p>
+
     <div class="flex gap-3 flex-wrap items-center pt-2">
 
       <!-- Expected Time tag -->
@@ -99,6 +100,26 @@
             class="px-3 py-1 rounded-full text-sm font-bold bg-accent-yellow text-text-main whitespace-nowrap flex items-center gap-1">
         +2 <span class="text-lg">⏱</span>
       </span>
+
+      <!-- Edit Buttons Section -->
+      <div class="absolute top-4 right-4 z-20 flex flex-row gap-3">
+
+        <button id="edit-desc-button" onclick="openEditDescription()"
+                class="hidden px-4 py-2 rounded-full bg-accent-blue shadow-lg font-bold">
+          Edit Description
+        </button>
+
+        <button id="edit-image-button" onclick="openEditImage()"
+                class="hidden px-4 py-2 rounded-full bg-accent-peach shadow-lg font-bold">
+          Edit Image
+        </button>
+
+        <button id="delete-task-button" onclick="openDeleteConfirmation()"
+                  class="hidden px-4 py-2 rounded-full bg-red-500 text-white shadow-lg font-bold">
+          Delete Task
+        </button>
+
+      </div>
 
     </div>
   </div>
@@ -137,26 +158,6 @@
              shadow-soft hover:opacity-90">
     Mark as Completed
   </button>
-</div>
-
-<!-- Edit Buttons Section   -->
-<div class="fixed top-56 right-8 z-50 flex flex-row gap-3">
-
-  <button id="edit-desc-button" onclick="openEditDescription()"
-          class="hidden px-4 py-2 rounded-full bg-accent-blue shadow-lg font-bold">
-    Edit Description
-  </button>
-
-  <button id="edit-image-button" onclick="openEditImage()"
-          class="hidden px-4 py-2 rounded-full bg-accent-peach shadow-lg font-bold">
-    Edit Image
-  </button>
-
-  <button id="delete-task-button" onclick="openDeleteConfirmation()"
-            class="hidden px-4 py-2 rounded-full bg-red-500 text-white shadow-lg font-bold">
-    Delete Task
-  </button>
-
 </div>
 
 <!-- Modal：編輯 Full Description -->
