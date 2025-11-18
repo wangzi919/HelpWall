@@ -60,8 +60,8 @@
   
   <!-- Top App Bar -->
   <div class="flex items-center p-4 pb-2 justify-between bg-background-light dark:bg-background-dark sticky top-0 z-10">
-    <button onclick="history.back()" class="flex size-12 items-center">
-      <span class="material-symbols-outlined text-text-main">arrow_back</span>
+    <button onclick="history.back()" class="flex items-center justify-center rounded-full h-12 w-12 hover:bg-black/5 transition">
+      <span class="material-symbols-outlined text-3xl">arrow_back</span>
     </button>
 
     <h2 class="text-text-main text-lg font-bold flex-1 text-center">My Profile</h2>
@@ -102,13 +102,16 @@
 
   <!-- Time Credit Display -->
   <div class="flex justify-center w-full mt-2">
-    <div class="flex items-center gap-3 bg-accent-mint px-5 py-3 rounded-xl shadow-soft border border-green-200">
+    <button 
+      onclick="window.location.href = `time_credit_log.html?user_id=${userId}`"
+      class="flex items-center gap-3 bg-accent-mint px-5 py-3 rounded-xl shadow-soft border border-green-200 active:scale-95 transition"
+    >
       <span class="material-symbols-outlined text-green-700 text-3xl">account_balance_wallet</span>
       <div class="flex flex-col">
         <p class="text-text-main text-sm font-bold">時間幣錢包</p>
         <p id="time-credit" class="text-green-700 text-2xl font-extrabold">0</p>
       </div>
-    </div>
+    </button>
   </div>
 
   <!-- Stats -->
