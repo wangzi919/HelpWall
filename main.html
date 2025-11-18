@@ -67,28 +67,48 @@
         }
         .leaflet-div-icon { background: transparent; border: none; }
         .map-marker-bubble {
+            display: inline-block;                /* 讓寬度依文字自動調整 */
             position: relative;
+            
             padding: 8px 12px;
             border-radius: 1.25rem;
+            background-color: var(--marker-color); /* 背景顏色跟著變 */
+            
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
             font-family: "Spline Sans", sans-serif;
             font-size: 14px;
             font-weight: 700;
             color: #4A4A4A;
-            white-space: nowrap;
+            
+            white-space: nowrap;                  /* 不換行，自動延伸 */
         }
+
+        /* 下方尖角 */
         .map-marker-bubble::after {
             content: '';
             position: absolute;
             bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
+
             width: 0;
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 8px solid var(--marker-color);
+            border-top: 8px solid var(--marker-color); /* 尖角同色 */
         }
+
+        /* 進行中：灰色 + 半透明（你已有的邏輯） */
+        .map-marker-bubble.taken {
+            background-color: #A9A9A9 !important;
+            opacity: 0.6;
+        }
+
+        .map-marker-bubble.taken::after {
+            border-top-color: #A9A9A9 !important;
+        }
+
         .user-marker {
             display: flex;
             justify-content: center;
