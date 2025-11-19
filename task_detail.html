@@ -479,7 +479,7 @@
     if (error) return alert("更新失敗：" + error.message);
 
     alert("描述已更新！");
-    document.getElementById("desc-text").textContent = newDesc;
+    document.getElementById("task-desc").textContent = newDesc;
   }
 
   async function saveImageUrl() {
@@ -494,7 +494,7 @@
     if (error) return alert("更新失敗：" + error.message);
 
     alert("圖片已更新！");
-    document.getElementById("task-image").style.backgroundImage = `url('${newUrl}')`;
+    /*document.getElementById("task-image").style.backgroundImage = `url('${newUrl}')`;*/
   }
 
   /* -------------------- Show Edit Buttons ---------------------- */

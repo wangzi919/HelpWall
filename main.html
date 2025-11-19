@@ -208,6 +208,8 @@
         let map = null;
         let markers = [];
         let isMapInitialized = false;
+        let userCurrentLat = 25.0330; // 預設值 (台北)
+        let userCurrentLng = 121.5654; // 預設值 (台北)
 
         // === 從 Supabase 載入任務 ===
         async function loadTasks() {
@@ -324,19 +326,61 @@
         // 地圖初始化
         function initMap() {
             if (isMapInitialized) return;
+
+            // 1. 嘗試獲取使用者位置
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const realLat = position.coords.latitude;
+                        const realLng = position.coords.longitude;
+
+                        userCurrentLat = realLat;
+                        userCurrentLng = realLng;
+                        
+                        initializeMapWithCoords(realLat, realLng);
+                    },
+                    (error) => {
+                        console.error("無法取得使用者位置，使用預設位置 (台北 101):", error);
+                        initializeMapWithCoords(userCurrentLat, userCurrentLng); // 預設位置
+                    },
+                    {
+                        // 可選：設定選項，如啟用高精準度、逾時時間等
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                console.error("瀏覽器不支援 Geolocation API，使用預設位置 (台北 101)。");
+                initializeMapWithCoords(userCurrentLat, userCurrentLng);
+            }
+        }
+
+        function initializeMapWithCoords(latitude, longitude) {
+            if (isMapInitialized) return;
             isMapInitialized = true;
-            const userLatLng = L.latLng(25.0330, 121.5654);
+
+            // 建立 Leaflet 經緯度物件
+            const userLatLng = L.latLng(latitude, longitude);
+
+            // 初始化地圖並設定中心點和縮放級別
             map = L.map(mapElement).setView(userLatLng, 14);
+
+            // 添加地圖圖層
             L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
+
             const userIcon = L.divIcon({
                 className: '',
                 html: `<div class="user-marker"><span class="material-symbols-outlined">person_pin</span></div>`,
                 iconSize: [40, 40],
                 iconAnchor: [20, 40]
             });
+
             L.marker(userLatLng, { icon: userIcon }).addTo(map);
+
+            console.log(`地圖已初始化於：(${latitude}, ${longitude})`);
         }
 
         // 切換 Wall/Map
@@ -375,8 +419,8 @@
                 title,
                 description: desc,
                 image_url: imageUrl,
-                lat: 25.033 + Math.random() * 0.02,
-                lng: 121.565 + Math.random() * 0.02,
+                lat: userCurrentLat,
+                lng: userCurrentLng,
                 color: ["#FFFACD", "#FFDAB9", "#D4F1F4"][Math.floor(Math.random() * 3)],
                 distance: "nearby"
             };
