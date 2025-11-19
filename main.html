@@ -183,11 +183,31 @@
         <div id="task-form" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-xl p-6 w-80 shadow-lg flex flex-col gap-3">
                 <h2 class="text-lg font-bold">Add New Help Task</h2>
+                
                 <input id="task-title" placeholder="Title" class="border rounded-lg p-2" />
                 <textarea id="task-desc" placeholder="Description" class="border rounded-lg p-2"></textarea>
+                
+                <div id="expected-time-btn" 
+                    class="border rounded-lg p-2 cursor-pointer text-gray-500 bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
+                    <span id="expected-time-display">Select Expected Time</span>
+                    <span class="material-symbols-outlined text-base">expand_more</span>
+                </div>
+                
                 <input id="task-image-url" placeholder="Image URL (Optional)" class="border rounded-lg p-2" /> 
                 <button id="submit-task" class="bg-blue-500 text-white rounded-lg py-2 hover:opacity-90">Submit</button>
                 <button id="close-task" class="text-sm text-gray-500 mt-2">Cancel</button>
+            </div>
+        </div>
+
+        <div id="time-picker-modal"
+            class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[999]">
+            <!-- Time Picker Modal Content -->
+            <div class="bg-white rounded-xl p-4 w-64 shadow-lg">
+                <h3 class="text-lg font-bold mb-3">Select Expected Time</h3>
+                <div id="time-options" class="flex flex-col gap-2">
+                    <!-- JS 會自動插入選項 -->
+                </div>
+                <button id="close-time-picker" class="text-sm text-gray-500 mt-3 w-full">Cancel</button>
             </div>
         </div>
     </div>
@@ -210,6 +230,55 @@
         let isMapInitialized = false;
         let userCurrentLat = 25.0330; // 預設值 (台北)
         let userCurrentLng = 121.5654; // 預設值 (台北)
+
+        const expectedTimeBtn = document.getElementById("expected-time-btn");
+        const timePickerModal = document.getElementById("time-picker-modal");
+        const timeOptionsContainer = document.getElementById("time-options");
+        const expectedTimeDisplay = document.getElementById("expected-time-display");
+        const closeTimePicker = document.getElementById("close-time-picker");
+
+        let selectedExpectedTime = null; //會被寫入 task_detail.expected_time
+
+        const timeOptions = [5, 10, 15, 20, 25, 30];
+
+        // 開啟 modal
+        expectedTimeBtn.addEventListener("click", () => {
+            timePickerModal.classList.remove("hidden");
+        });
+
+        // 建立按鈕
+        timeOptionsContainer.innerHTML = timeOptions
+            .map(t => `
+                <div class="p-2 border rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer text-center"
+                    data-value="${t}">
+                    ${t} minutes
+                </div>
+            `)
+            .join("");
+
+        // 選擇後關閉
+        timeOptionsContainer.addEventListener("click", (e) => {
+            const value = e.target.getAttribute("data-value");
+            if (value) {
+                selectedExpectedTime = `${value} minutes`;
+                expectedTimeDisplay.textContent = selectedExpectedTime;
+                expectedTimeDisplay.classList.remove("text-gray-500");
+                expectedTimeDisplay.classList.add("text-black");
+                timePickerModal.classList.add("hidden");
+            }
+        });
+
+        // 點背景關閉
+        timePickerModal.addEventListener("click", (e) => {
+            if (e.target === timePickerModal) {
+                timePickerModal.classList.add("hidden");
+            }
+        });
+
+        // Cancel
+        closeTimePicker.addEventListener("click", () => {
+            timePickerModal.classList.add("hidden");
+        });
 
         // === 從 Supabase 載入任務 ===
         async function loadTasks() {
@@ -241,14 +310,13 @@
                 const isCompleted = assignment?.status === "completed";
 
                 // 卡片 UI
+                if (isCompleted) continue; // 已完成不顯示
                 const card = document.createElement('div');
                 card.className = "task-card flex flex-col rounded-lg p-4 shadow-soft transition-transform duration-200 ease-in-out hover:-translate-y-1 cursor-pointer";
                 card.style.backgroundColor = task.color || "#FFFACD";
 
                 let statusBadge = "";
-                if (isCompleted) {
-                    statusBadge = `<span class="text-xs px-2 py-1 bg-blue-500 text-white rounded-full">已完成</span>`;
-                } else if (isTaken) {
+                if (isTaken) {
                     statusBadge = `<span class="text-xs px-2 py-1 bg-gray-400 text-white rounded-full">進行中</span>`;
                 } else {
                     statusBadge = `<span class="text-xs px-2 py-1 bg-green-500 text-white rounded-full">可接任務</span>`;
@@ -277,7 +345,6 @@
                 wallContainer.appendChild(card);
 
                 // 地圖標記
-                if (isCompleted) continue; // 地圖不顯示
                 if (map && task.lat && task.lng) {
                     const html = `
                         <div class="map-marker-bubble" 
@@ -408,10 +475,11 @@
         submitBtn.addEventListener('click', async () => {
             const title = document.getElementById('task-title').value.trim();
             const desc = document.getElementById('task-desc').value.trim();
-            const imageUrl = document.getElementById('task-image-url').value.trim(); 
+            const imageUrl = document.getElementById('task-image-url').value.trim();
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!title) return alert("請輸入任務標題");
+            if (!selectedExpectedTime) return alert("請選擇預期時間");
 
             const newTask = {
                 user_uid: user.id,
@@ -438,14 +506,15 @@
             }
 
             const taskId = insertedTask.id;
+            const time_credit = selectedExpectedTime / 5;
 
-            // === 2. 在 task_detail 建立 row ===
+            // === 2. 新增 task_detail ===
             const detailRow = {
                 task_id: taskId,
                 full_description: null,
                 contact_method: null,
-                expected_time: "10 minutes",
-                time_credit: 2
+                expected_time: selectedExpectedTime,
+                time_credit: time_credit
             };
 
             const { error: detailError } = await supabase
@@ -460,9 +529,14 @@
 
             // === 3. UI reset ===
             form.classList.add('hidden');
+
             document.getElementById('task-title').value = "";
             document.getElementById('task-desc').value = "";
             document.getElementById('task-image-url').value = "";
+            expectedTimeDisplay.textContent = "Select Expected Time";
+            expectedTimeDisplay.classList.add("text-gray-500");
+            expectedTimeDisplay.classList.remove("text-black");
+            selectedExpectedTime = null;
 
             await loadTasks();
         });
