@@ -100,28 +100,30 @@
             class="px-3 py-1 rounded-full text-sm font-bold bg-accent-yellow text-text-main whitespace-nowrap flex items-center gap-1">
         +2 <span class="text-lg">⏱</span>
       </span>
-
-      <!-- Edit Buttons Section -->
-      <div class="absolute top-4 right-4 z-20 flex flex-row gap-3">
-
-        <button id="edit-desc-button" onclick="openEditDescription()"
-                class="hidden px-4 py-2 rounded-full bg-accent-blue shadow-lg font-bold">
-          Edit Description
-        </button>
-
-        <button id="edit-image-button" onclick="openEditImage()"
-                class="hidden px-4 py-2 rounded-full bg-accent-peach shadow-lg font-bold">
-          Edit Image
-        </button>
-
-        <button id="delete-task-button" onclick="openDeleteConfirmation()"
-                  class="hidden px-4 py-2 rounded-full bg-red-500 text-white shadow-lg font-bold">
-          Delete Task
-        </button>
-
-      </div>
-
     </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2 justify-start md:justify-end mt-4">
+      <button id="edit-desc-button" onclick="openEditDescription()"
+              class="px-4 py-2 rounded-full bg-blue-600 shadow-lg font-bold text-white text-sm 
+                    md:px-6 md:py-3 md:text-base md:font-extrabold                                    /* <--- 這裡新增了電腦版優化 */
+                    transition-transform duration-150 active:scale-95 flex items-center gap-1">
+        ✏️ Edit
+      </button>
+      
+      <button id="edit-image-button" onclick="openEditImage()"
+              class="px-4 py-2 rounded-full bg-orange-600 shadow-lg font-bold text-white text-sm 
+                    md:px-6 md:py-3 md:text-base md:font-extrabold                                    /* <--- 這裡新增了電腦版優化 */
+                    transition-transform duration-150 active:scale-95 flex items-center gap-1">
+        🖼️ Image
+      </button>
+      
+      <button id="delete-task-button" onclick="openDeleteConfirmation()"
+              class="px-4 py-2 rounded-full bg-red-500 shadow-lg font-bold text-white text-sm 
+                    md:px-6 md:py-3 md:text-base md:font-extrabold                                    /* <--- 這裡新增了電腦版優化 */
+                    transition-transform duration-150 active:scale-95 flex items-center gap-1">
+        🗑️ Delete
+      </button> 
   </div>
 
   <!-- Comments Placeholder -->
