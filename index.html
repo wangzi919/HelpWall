@@ -190,27 +190,10 @@
         if (error) {
             authMessage.textContent = '錯誤：' + error.message;
         } else if (data.user) {
-          authMessage.textContent = '登入成功！正在取得使用者資料...';
-
-          const uid = data.user.id; // Supabase 的 auth UID
-
-          // === 查你的資料庫的 user 資料表 ===
-          const { data: profile, error: profileError } = await supabase
-              .from("user")
-              .select("id")
-              .eq("uid", uid)
-              .single();
-
-          if (profileError) {
-              authMessage.textContent = '登入成功，但取得使用者資料失敗：' + profileError.message;
-              return;
-          }
-
-          // profile.id 就是你資料庫的 user_id
-          const userId = profile.id;
-
-          window.location.href = `main.html?user_id=${userId}`;
-          }
+            authMessage.textContent = '登入成功！正在跳轉...';
+            
+            window.location.href = "main.html";
+        }
     });
 </script>
 

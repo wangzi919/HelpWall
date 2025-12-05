@@ -240,20 +240,33 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   const taskId = urlParams.get("task_id");
-  const userId = urlParams.get("user_id");
+  let userId = null;
+
 
   if (!taskId) console.error("❌ Missing task_id in URL");
 
-  loadTask(taskId);
-  checkButtons();
-  checkEditPermissions();
+  async function initDetail() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      if (user) {
+          userId = user.id;
+      } else {
+          console.log("訪客模式");
+      }
+
+      loadTask(taskId);
+      checkButtons();        
+      checkEditPermissions(); 
+  }
+
+  initDetail();
 
   /* -------------------- Load Task ---------------------- */
   async function loadTask(id) {
     const { data: task } = await supabaseClient.from("tasks").select("*").eq("id", id).single();
     if (!task) return;
 
-    const { data: user } = await supabaseClient.from("user").select("*").eq("id", task.user_id).single();
+    const { data: user } = await supabaseClient.from("user").select("*").eq("uid", task.user_uid).single();
     const { data: detail } = await supabaseClient.from("task_detail").select("*").eq("task_id", id).single();
     const { data: thanks } = await supabaseClient.from("thanks_card").select("*").eq("task_id", id);
 
@@ -311,7 +324,7 @@
       .from("task_assignment")
       .insert({
         task_id: taskId,
-        helper_id: userId,
+        helper_uid: userId,
         status: "in_progress",
       });
 
@@ -335,12 +348,12 @@
       return alert("無法讀取任務時間幣資料");
     }
 
-    const credit = detail.time_credit || 0;
+    const credit = detail.time_credit;
 
     // 2. 找到 assignment（知道 helper 是誰）
     const { data: assignment, error: assignErr } = await supabaseClient
       .from("task_assignment")
-      .select("helper_id")
+      .select("helper_uid")
       .eq("task_id", taskId)
       .single();
 
@@ -349,12 +362,12 @@
       return alert("找不到任務協助者");
     }
 
-    const helperId = assignment.helper_id;
+    const helperId = assignment.helper_uid;
     const publisherId = userId; // 按下完成者是發布者本人
 
     // --- 3. 扣 發布者 時間幣 ---
     let { error: minusErr } = await supabaseClient.rpc("increment_credit", {
-      user_id: publisherId,
+      user_uid: publisherId,
       amount: -credit
     });
 
@@ -364,7 +377,7 @@
 
     // --- 4. 加 給 helper 時間幣 ---
     let { error: plusErr } = await supabaseClient.rpc("increment_credit", {
-      user_id: helperId,
+      user_uid: helperId,
       amount: credit
     });
 
@@ -373,15 +386,14 @@
     }
 
     // --- 5. 寫入 time_credit_log（兩筆）---
-
     await supabaseClient.from("time_credit_log").insert([
       {
-        user_id: publisherId,
+        user_uid: publisherId,
         related_task: taskId,
         change_amount: -credit,
       },
       {
-        user_id: helperId,
+        user_uid: helperId,
         related_task: taskId,
         change_amount: credit,
       }
@@ -424,7 +436,7 @@
     const completeBtn = document.getElementById("completeTaskBtn");
 
     /* === Accept Task Button === */
-    if (!assignment && userId != task.user_id) {
+    if (!assignment && userId != task.user_uid) {
       // 沒人接 AND 不是發布者 → 可以接
       acceptBtn.classList.remove("hidden");
     }
@@ -433,7 +445,7 @@
     if (
       assignment &&
       assignment.status === "in_progress" &&
-      userId == task.user_id     // 任務的發布者
+      userId == task.user_uid     // 任務的發布者
     ) {
       completeBtn.classList.remove("hidden");
     }
@@ -474,7 +486,7 @@
     const { error } = await supabaseClient
       .from("task_detail")
       .update({ full_description: newDesc })
-      .eq("task_id", taskId);
+      .eq("task_uid", taskId);
 
     if (error) return alert("更新失敗：" + error.message);
 
@@ -494,7 +506,6 @@
     if (error) return alert("更新失敗：" + error.message);
 
     alert("圖片已更新！");
-    /*document.getElementById("task-image").style.backgroundImage = `url('${newUrl}')`;*/
   }
 
   /* -------------------- Show Edit Buttons ---------------------- */
@@ -505,7 +516,7 @@
 
       const { data: taskData, error: taskError } = await supabaseClient
           .from('tasks')
-          .select('user_id')
+          .select('user_uid')
           .eq('id', taskId)
           .single();
       
@@ -514,7 +525,7 @@
           return;
       }
 
-      const taskOwnerId = taskData.user_id;
+      const taskOwnerId = taskData.user_uid;
       
       const { data: assignmentData, error: assignmentError } = await supabaseClient
           .from('task_assignment')
@@ -575,7 +586,7 @@
 
       // 關閉視窗與返回主頁
       closeDeleteConfirmation();
-      window.location.href = `main.html?user_id=${userId}`;
+      window.location.href = "main.html";
   }
 
   /* -------------------- Edit expected time ---------------------- */

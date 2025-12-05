@@ -78,14 +78,30 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5ZXlrbGxuZWZ3dmxva3JlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDg2MjQsImV4cCI6MjA3ODYyNDYyNH0.zTx11lXOPAdeakTXQch9OEO4c7rfhMImNaKDz4G9DIs"
   );
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const userId = urlParams.get("user_id");
+  let userId = null;
 
-  loadWalletTotal();
-  loadCreditLogs();
+  async function initLogPage() {
+      // 驗證身分
+      const { data: { user } } = await sb.auth.getUser();
+
+      // 如果沒登入，踢回首頁
+      if (!user) {
+          alert("請先登入");
+          window.location.href = 'index.html';
+          return;
+      }
+
+      userId = user.id;
+      console.log("Current User UUID:", userId);
+
+      loadWalletTotal();
+      loadCreditLogs();
+  }
+
+  initLogPage()
 
   async function loadWalletTotal() {
-    const { data: user } = await sb.from("user").select("time_credit").eq("id", userId).single();
+    const { data: user } = await sb.from("user").select("time_credit").eq("uid", userId).single();
     document.getElementById("wallet-total").textContent = user?.time_credit ?? 0;
   }
 
@@ -93,7 +109,7 @@
     const { data: logs } = await sb
       .from("time_credit_log")
       .select("*, tasks(title)")
-      .eq("user_id", userId)
+      .eq("user_uid", userId)
       .order("created_at", { ascending: false });
 
     const list = document.getElementById("log-list");
@@ -115,7 +131,7 @@
         "flex items-center gap-4 bg-white dark:bg-gray-800 px-4 py-3 min-h-[72px] justify-between rounded-xl shadow cursor-pointer";
 
       item.onclick = () => {
-        window.location.href = `task_detail.html?user_id=${userId}&task_id=${log.related_task}`;
+        window.location.href = `task_detail.html?task_id=${log.related_task}`;
       };
 
       item.innerHTML = `

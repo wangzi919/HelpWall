@@ -222,24 +222,22 @@
         const addBtn = document.getElementById('add-btn');
         const closeBtn = document.getElementById('close-task');
         const submitBtn = document.getElementById('submit-task');
+        const expectedTimeBtn = document.getElementById("expected-time-btn");
+        const timePickerModal = document.getElementById("time-picker-modal");
+        const timeOptionsContainer = document.getElementById("time-options");
+        const expectedTimeDisplay = document.getElementById("expected-time-display");
+        const closeTimePicker = document.getElementById("close-time-picker");
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get("user_id");
+        const timeOptions = [5, 10, 15, 20, 25, 30];
 
         let map = null;
         let markers = [];
         let isMapInitialized = false;
         let userCurrentLat = 25.0330; // 預設值 (台北)
         let userCurrentLng = 121.5654; // 預設值 (台北)
-
-        const expectedTimeBtn = document.getElementById("expected-time-btn");
-        const timePickerModal = document.getElementById("time-picker-modal");
-        const timeOptionsContainer = document.getElementById("time-options");
-        const expectedTimeDisplay = document.getElementById("expected-time-display");
-        const closeTimePicker = document.getElementById("close-time-picker");
-
         let selectedExpectedTime = null; //會被寫入 task_detail.expected_time
 
-        const timeOptions = [5, 10, 15, 20, 25, 30];
+        let userId = null;
 
         // 開啟 modal
         expectedTimeBtn.addEventListener("click", () => {
@@ -279,6 +277,52 @@
         closeTimePicker.addEventListener("click", () => {
             timePickerModal.classList.add("hidden");
         });
+
+        async function initApp() {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                // 沒登入 -> 踢回首頁
+                window.location.href = 'index.html';
+                return;
+            }
+
+            userId = user.id;
+            console.log("Current User UUID:", userId);
+
+            loadCurrentUser();
+            loadTasks();
+            
+            if (viewMapRadio.checked) {
+                initMap();
+            }
+        }
+
+        initApp();
+
+        // === 讀取登入使用者的頭像 ===
+        async function loadCurrentUser() {
+            const { data: userProfile, error } = await supabase
+                .from('user')
+                .select('*')
+                .eq('uid', userId) // 使用 UUID
+                .single();
+
+            if (error) {
+                console.error("無法讀取使用者資料", error);
+                return;
+            }
+
+            const avatar = document.getElementById("nav-user-avatar");
+            if (avatar && userProfile.image_url) {
+                avatar.style.backgroundImage = `url('${userProfile.image_url}')`;
+            }
+
+            avatar.addEventListener("click", () => {
+                // 去個人頁面，不需要帶參數，預設就是看自己
+                window.location.href = `user_profile.html`; 
+            });
+        }
 
         // === 從 Supabase 載入任務 ===
         async function loadTasks() {
@@ -339,7 +383,7 @@
 
                 // 點擊跳到 task detail
                 card.addEventListener('click', () => {
-                    window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
+                    window.location.href = `task_detail.html?task_id=${task.id}`;
                 });
 
                 wallContainer.appendChild(card);
@@ -360,34 +404,10 @@
                     markers.push(marker);
 
                     marker.on('click', () => {
-                        window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`;
+                        window.location.href = `task_detail.html?task_id=${task.id}`;
                     });
                 }
             }
-        }
-
-        
-        // === 讀取登入使用者的頭像 ===
-        async function loadCurrentUser() {
-            const { data: user, error } = await supabase
-                .from('user')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (error) {
-                console.error("Failed to load user:", error);
-                return;
-            }
-
-            const avatar = document.getElementById("nav-user-avatar");
-            if (avatar && user.image_url) {
-                avatar.style.backgroundImage = `url('${user.image_url}')`;
-            }
-
-            avatar.addEventListener("click", () => {
-                window.location.href = `user_profile.html?user_id=${user.id}`;
-            });
         }
 
         // 地圖初始化
@@ -476,14 +496,12 @@
             const title = document.getElementById('task-title').value.trim();
             const desc = document.getElementById('task-desc').value.trim();
             const imageUrl = document.getElementById('task-image-url').value.trim();
-            const { data: { user } } = await supabase.auth.getUser();
 
             if (!title) return alert("請輸入任務標題");
             if (!selectedExpectedTime) return alert("請選擇預期時間");
 
             const newTask = {
-                user_uid: user.id,
-                user_id: userId,
+                user_uid: userId,
                 title,
                 description: desc,
                 image_url: imageUrl,
@@ -540,9 +558,6 @@
 
             await loadTasks();
         });
-
-        loadCurrentUser();
-        loadTasks();
     </script>
 </body>
 </html>

@@ -103,7 +103,7 @@
   <!-- Time Credit Display -->
   <div class="flex justify-center w-full mt-2">
     <button 
-      onclick="window.location.href = `time_credit_log.html?user_id=${userId}`"
+      onclick="window.location.href = `time_credit_log.html`"
       class="flex items-center gap-3 bg-accent-mint px-5 py-3 rounded-xl shadow-soft border border-green-200 active:scale-95 transition"
     >
       <span class="material-symbols-outlined text-green-700 text-3xl">account_balance_wallet</span>
@@ -168,24 +168,33 @@ const SUPABASE_URL = "https://zyeykllnefwvlokrecbv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5ZXlrbGxuZWZ3dmxva3JlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDg2MjQsImV4cCI6MjA3ODYyNDYyNH0.zTx11lXOPAdeakTXQch9OEO4c7rfhMImNaKDz4G9DIs";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// URL ?user_id=xx
 const urlParams = new URLSearchParams(window.location.search);
-const userId = urlParams.get("user_id");
 
-/* Basic guard */
-if (!userId) {
-  console.error("No user_id provided in URL. Example: user_profile.html?user_id=1");
-  // We continue but some features will show empty state.
-}
+let userId = null;
 
 /* ---------------------------
    Loaders
 ----------------------------*/
-loadUserProfile(userId);
-loadUserStats(userId);
-loadUserRequests(userId); // default tab
-// loadUserHelp will be called when user clicks "My Help"
+async function initProfile() {
+    // 1. 驗證身分
+    const { data: { user } } = await sb.auth.getUser();
+
+    if (!user) {
+        // 沒登入 -> 踢回首頁
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 2. 設定全域 UUID
+    userId = user.id;
+    console.log("Logged in as:", userId);
+
+    loadUserProfile(userId);
+    loadUserStats(userId);
+    loadUserRequests(userId);
+}
+
+initProfile();
 
 /* -------------------------------
    1. 讀取使用者資料
@@ -199,7 +208,7 @@ async function loadUserProfile(id) {
   const { data: user, error } = await sb
     .from("user")
     .select("*")
-    .eq("id", id)
+    .eq("uid", id)
     .single();
 
   if (error) {
@@ -210,7 +219,7 @@ async function loadUserProfile(id) {
 
   document.getElementById("profile-avatar").style.backgroundImage = `url('${user.image_url || "https://placehold.co/200x200"}')`;
   document.getElementById("profile-name").textContent = user.name || "Unnamed";
-  document.getElementById("profile-bio").textContent = user.bio || "";
+  document.getElementById("profile-bio").textContent = user.bio || "這位使用者很懶，什麼都沒寫...";
   document.getElementById("time-credit").textContent = user.time_credit ?? 0;
 }
 
@@ -223,7 +232,7 @@ async function loadUserStats(id) {
     const { count: requestsCount, error: reqErr } = await sb
       .from("tasks")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", id);
+      .eq("user_uid", id);
 
     if (reqErr) throw reqErr;
     document.getElementById("stat-requests").textContent = requestsCount || 0;
@@ -232,12 +241,12 @@ async function loadUserStats(id) {
     document.getElementById("stat-requests").textContent = "0";
   }
 
-  // Help Given = number of completed assignments where helper_id = id
+  // Help Given = number of completed assignments where helper_uid = id
   try {
     const { count: helpCount, error: helpErr } = await sb
       .from("task_assignment")
       .select("*", { count: "exact", head: true })
-      .eq("helper_id", id)
+      .eq("helper_uid", id)
       .eq("status", "completed");
 
     if (helpErr) throw helpErr;
@@ -252,7 +261,7 @@ async function loadUserStats(id) {
     const { count: thanksCount, error: thanksErr } = await sb
       .from("thanks_card")
       .select("*", { count: "exact", head: true })
-      .eq("receiver_id", id);
+      .eq("receiver_uid", id);
 
     if (thanksErr) throw thanksErr;
     document.getElementById("stat-thanks").textContent = thanksCount || 0;
@@ -269,7 +278,7 @@ async function loadUserRequests(id) {
   const { data: tasks, error } = await sb
     .from("tasks")
     .select("*")
-    .eq("user_id", id)
+    .eq("user_uid", id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -284,7 +293,7 @@ async function loadUserRequests(id) {
     // 查詢 assignment 狀況
     const { data: assignment } = await sb
       .from("task_assignment")
-      .select("status, helper_id")
+      .select("status, helper_uid")
       .eq("task_id", task.id)
       .maybeSingle();
 
@@ -302,7 +311,7 @@ async function loadUserRequests(id) {
       "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
 
     item.onclick = () =>
-      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${task.id}`);
+      (window.location.href = `task_detail.html?task_id=${task.id}`);
 
     item.innerHTML = `
       <div class="flex items-center gap-4">
@@ -333,7 +342,7 @@ async function loadMyHelp(id) {
   const { data: assignments, error } = await sb
     .from("task_assignment")
     .select("task_id, status, tasks(title, created_at)")
-    .eq("helper_id", id)
+    .eq("helper_uid", id)
     .order("accepted_at", { ascending: false });
 
   if (error) {
@@ -359,7 +368,7 @@ async function loadMyHelp(id) {
       "flex items-center gap-4 bg-white dark:bg-background-dark rounded-xl p-4 min-h-[72px] justify-between shadow-soft cursor-pointer";
 
     item.onclick = () =>
-      (window.location.href = `task_detail.html?user_id=${userId}&task_id=${row.task_id}`);
+      (window.location.href = `task_detail.html?task_id=${row.task_id}`);
 
     item.innerHTML = `
       <div class="flex items-center gap-4">
