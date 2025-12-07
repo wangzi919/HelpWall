@@ -114,6 +114,15 @@
     </button>
   </div>
 
+  <div class="flex justify-center w-full mt-4">
+    <button id="logout-btn"
+      class="flex items-center gap-2 bg-red-500 text-white px-5 py-3 rounded-full shadow-soft
+            active:scale-95 transition">
+      <span class="material-symbols-outlined">logout</span>
+      <span class="font-bold">Logout</span>
+    </button>
+  </div>
+
   <!-- Stats -->
   <div class="flex flex-wrap gap-4 p-4">
     <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-5 bg-accent-mint shadow-soft items-center text-center">
@@ -451,6 +460,26 @@ document.getElementById("btn-edit").addEventListener("click", () => {
 
 document.getElementById("btn-settings").addEventListener("click", () => {
   alert("Settings UI not implemented yet.");
+});
+
+/* -------------------------------
+   Logout Button
+-------------------------------- */
+document.getElementById("logout-btn").addEventListener("click", async () => {
+
+  const { error } = await sb.auth.signOut();
+
+  if (error) {
+    console.error("Logout failed:", error);
+    alert("登出失敗，請稍後再試");
+    return;
+  }
+
+  // 清除 localStorage 裡的 Supabase token（保險用）
+  localStorage.clear();
+
+  // 回到首頁
+  window.location.href = "index.html";
 });
 </script>
 

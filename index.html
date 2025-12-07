@@ -1,98 +1,140 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>HelpWall - A little help, right around the corner.</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#20df60",
-            "background-light": "#f6f8f6",
-            "background-dark": "#112116",
-          },
-          fontFamily: {
-            "display": ["Spline Sans", "sans-serif"]
-          },
-          borderRadius: {
-            "DEFAULT": "1rem",
-            "lg": "2rem",
-            "xl": "3rem",
-            "full": "9999px"
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HelpWall Login</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<style>
+        .hand-drawn-shadow {
+            box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.1);
+        }
+        .hand-drawn-shadow-hover:hover {
+            box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.15);
+            transform: translate(-1px, -1px);
+        }
+    </style>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#4CAF50",
+              "background-light": "#FFF9E6", // A warm, parchment-like light yellow
+              "background-dark": "#3C3A44", // A deep, warm gray for dark mode
+              "note-blue": "#D1EAFE",
+              "note-yellow": "#FFFACD",
+              "note-pink": "#FFD1DC",
+              "note-green": "#D4EDDA",
+              "note-purple": "#E6E0FF",
+              "cork": "#D2A679",
+            },
+            fontFamily: {
+              display: ["Fredoka", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "1.5rem",
+            },
           },
         },
-      },
-    }
-  </script>
-  <style>
-    body { font-family: 'Spline Sans', sans-serif; min-height: max(884px, 100dvh); }
-    .line-icon {
-      width: 24px; height: 24px; background-color: #06C755;
-      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.2,5.7c-0.2-0.8-0.6-1.5-1.1-2.1c-0.6-0.6-1.3-1-2.1-1.2C17.2,2.1,16.4,2,12,2c-4.4,0-5.2,0.1-6,0.4c-0.8,0.2-1.5,0.6-2.1,1.1C3.3,4.2,2.9,4.9,2.7,5.7C2.4,6.5,2.3,7.3,2.3,11.7c0,4.4,0.1,5.2,0.4,6c0.2,0.8,0.6,1.5,1.1,2.1c0.6,0.6,1.3,1,2.1,1.2c0.8,0.3,1.6,0.4,6,0.4c4.4,0,5.2-0.1,6-0.4c0.8-0.2,1.5-0.6,2.1-1.1c0.6-0.6,1-1.3,1.2-2.1c0.3-0.8,0.4-1.6,0.4-6C21.7,7.3,21.6,6.5,21.2,5.7z M19.4,17.4c-0.1,0.5-0.4,1-0.7,1.3c-0.4,0.4-0.8,0.6-1.3,0.7c-0.6,0.3-1.4,0.3-5.4,0.3s-4.7,0-5.4-0.3c-0.5-0.1-1-0.4-1.3-0.7c-0.4-0.4-0.6-0.8-0.7-1.3c-0.3-0.6-0.3-1.4-0.3-5.4s0-4.7,0.3-5.4c0.1-0.5,0.4-1,0.7-1.3c0.4-0.4,0.8-0.6,1.3-0.7c0.6-0.3,1.4-0.3,5.4-0.3s4.7,0,5.4,0.3c0.5,0.1,1,0.4,1.3,0.7c0.4,0.4,0.6,0.8,0.7,1.3c0.3,0.6,0.3,1.4,0.3,5.4S19.7,16.7,19.4,17.4z M17,11.4c0-2.8-1.5-4.4-4.5-4.4H8.7v8.9h3.7c3.1,0,4.6-1.5,4.6-4.5zM15,11.4c0,1.9-0.8,2.7-2.8,2.7h-1.6V8.7h1.6C14.2,8.7,15,9.5,15,11.4z M6.8,15.9V8h-1v7.9H6.8z'/%3E%3C/svg%3E") no-repeat center;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.2,5.7c-0.2-0.8-0.6-1.5-1.1-2.1c-0.6-0.6-1.3-1-2.1-1.2C17.2,2.1,16.4,2,12,2c-4.4,0-5.2,0.1-6,0.4c-0.8,0.2-1.5,0.6-2.1,1.1C3.3,4.2,2.9,4.9,2.7,5.7C2.4,6.5,2.3,7.3,2.3,11.7c0,4.4,0.1,5.2,0.4,6c0.2,0.8,0.6,1.5,1.1,2.1c0.6,0.6,1.3,1,2.1,1.2c0.8,0.3,1.6,0.4,6,0.4c4.4,0,5.2-0.1,6-0.4c0.8-0.2,1.5-0.6,2.1-1.1c0.6-0.6,1-1.3,1.2-2.1c0.3-0.8,0.4-1.6,0.4-6C21.7,7.3,21.6,6.5,21.2,5.7z M19.4,17.4c-0.1,0.5-0.4,1-0.7,1.3c-0.4,0.4-0.8,0.6-1.3,0.7c-0.6,0.3-1.4,0.3-5.4,0.3s-4.7,0-5.4-0.3c-0.5-0.1-1-0.4-1.3-0.7c-0.4-0.4-0.6-0.8-0.7-1.3c-0.3-0.6-0.3-1.4-0.3-5.4s0-4.7,0.3-5.4c0.1-0.5,0.4-1,0.7-1.3c0.4-0.4,0.8-0.6,1.3-0.7c0.6-0.3,1.4-0.3,5.4-0.3s4.7,0,5.4,0.3c0.5,0.1,1,0.4,1.3,0.7c0.4,0.4,0.6,0.8,0.7,1.3c0.3,0.6,0.3,1.4,0.3,5.4S19.7,16.7,19.4,17.4z M17,11.4c0-2.8-1.5-4.4-4.5-4.4H8.7v8.9h3.7c3.1,0,4.6-1.5,4.6-4.5zM15,11.4c0,1.9,3.7x2.7-2.8,2.7h-1.6V8.7h1.6C14.2,8.7,15,9.5,15,11.4z M6.8,15.9V8h-1v7.9H6.8z'/%3E%3C/svg%3E") no-repeat center;
+      };
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
     }
   </style>
-</head>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+<div class="relative min-h-screen w-full overflow-hidden flex flex-col">
+<div class="absolute top-0 left-0 w-full h-full">
+<svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 1024">
+<path class="opacity-30 dark:opacity-20" d="M-28.52 355.5C118.48 404.5 322.48 244.5 487.48 244.5C652.48 244.5 829.147 435.167 968.98 463C1108.81 490.833 1319.48 355.5 1473.48 322.5" fill="none" stroke="#B0E0E6" stroke-linecap="round" stroke-width="150"></path>
+<path class="opacity-30 dark:opacity-20" d="M1537 779C1390 730 1186 890 1021 890C856 890 679.333 699.333 539.5 671.5C399.667 643.667 189 779 -25 812" fill="none" stroke="#FFC0CB" stroke-linecap="round" stroke-width="150"></path>
+<path class="opacity-30 dark:opacity-20" d="M-55.5 90C91.5 139 295.5 -21 460.5 -21C625.5 -21 802.167 169.667 942 197.5C1081.83 225.333 1292.5 90 1446.5 57" fill="none" stroke="#FFFACD" stroke-linecap="round" stroke-width="150"></path>
+</svg>
+</div>
+<main class="relative z-10 flex flex-col flex-grow items-center justify-between p-6 pt-16 pb-8 text-center text-slate-800 dark:text-slate-100">
+<div class="w-full">
+<h1 class="text-6xl font-bold tracking-tighter">HelpWall</h1>
+<p class="mt-2 text-lg text-slate-600 dark:text-slate-300">A little help, right around the corner.</p>
+</div>
+<div class="relative w-full max-w-sm h-96 mt-4 mb-4 flex-grow">
+<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4/5 bg-cork rounded-3xl shadow-lg dark:bg-opacity-80"></div>
+<div class="absolute top-[15%] left-[55%] w-32 h-24 bg-note-blue rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-6 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<p class="text-sm font-semibold">Community</p>
+<svg class="w-10 h-10 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="9" x2="15" y1="10" y2="10"></line><line x1="9" x2="13" y1="13" y2="13"></line></svg>
+</div>
+<div class="absolute top-[30%] left-[8%] w-32 h-24 bg-note-green rounded-lg p-2 flex flex-col items-center justify-center transform rotate-3 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<p class="text-sm font-semibold">You got this!</p>
+<svg class="w-10 h-10 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" x2="9.01" y1="9" y2="9"></line><line x1="15" x2="15.01" y1="9" y2="9"></line></svg>
+</div>
+<div class="absolute top-[45%] left-[30%] w-28 h-28 bg-note-yellow rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-2 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</div>
+<div class="absolute top-[5%] left-[25%] w-20 h-20 bg-note-yellow rounded-lg p-2 flex flex-col items-center justify-center transform rotate-12 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-green-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" x2="9.01" y1="9" y2="9"></line><line x1="15" x2="15.01" y1="9" y2="9"></line></svg>
+</div>
+<div class="absolute top-[60%] left-[5%] w-28 h-20 bg-note-pink rounded-lg p-2 flex items-center justify-center transform -rotate-8 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-yellow-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<svg class="w-12 h-12 transform scale-x-[-1]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+</div>
+<div class="absolute top-[50%] right-[5%] w-36 h-28 bg-note-blue rounded-lg p-2 flex flex-col items-center justify-center transform rotate-5 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-yellow-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<p class="text-sm font-semibold">Community Help</p>
+<svg class="w-12 h-12 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+</div>
+<div class="absolute top-[2%] left-[2%] w-24 h-24 bg-note-purple rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-12 hand-drawn-shadow">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
+<svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 16V8"></path></svg>
+<p class="text-xs mt-1">Help</p>
+</div>
+</div>
+<div class="w-full max-w-sm flex flex-col gap-4 mt-auto">
+<button id="login-btn" class="w-full flex items-center justify-center gap-2 bg-primary text-white text-lg font-semibold py-4 rounded-full shadow-lg transform transition-transform duration-150 ease-in-out hover:scale-105 active:scale-100 hand-drawn-shadow hand-drawn-shadow-hover">
+<img alt="Line app icon" class="w-6 h-6" src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg"/>
+<span>Login with LINE</span>
+</button>
+<button id="guest-btn" class="w-full bg-white dark:bg-slate-200 text-slate-700 dark:text-slate-800 text-lg font-semibold py-4 rounded-full shadow-lg transform transition-transform duration-150 ease-in-out hover:scale-105 active:scale-100 hand-drawn-shadow hand-drawn-shadow-hover">
+                    Continue with Email
+                </button>
+</div>
+</main>
+</div>
 
-<body class="font-display">
-  <div class="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-[#B0E0E6] to-[#FFFBF5]">
-    <div class="flex flex-col items-center justify-center p-4">
-      <div class="w-full max-w-sm flex flex-col items-center">
-        
-        <!-- LOGO -->
-        <div class="w-full max-w-[300px]">
-          <div class="aspect-square bg-center bg-no-repeat bg-contain"
-            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDQfz3wy3rbPnDvnYqhEL4glx2Ym8tudW1fwQtW-HvRTeT0ek8C7m2bTHS22kFX0y88olcFsWr7-kPqnyYXdrxAk-nnmPB2Zv91VkiTA5HrHl17k7MRJUA_sVpxhR02ojRaP3zpYEASvHQwQN9FOK_bGxC87AdIIOT8kjKHg1lpByDFKVfQ55_2SH-6iXvwZku-Lvjg2QgG8n4zBhS3FrrzgsBC1B0r0zti7uAmdeVnH_U-R7TjGBtcyUcdiJs9bJrVRosFgZvm6Hce");'>
-          </div>
-        </div>
-
-        <h1 class="text-[#1A3A3A] text-[32px] font-bold text-center pt-6 pb-3">HelpWall</h1>
-        <p class="text-gray-700/80 text-base text-center pb-8">A little help, right around the corner.</p>
-
-        <!-- main-buttons-area -->
-        <div id="main-buttons-area" class="flex flex-col gap-3 w-full px-4">
-
-          <!-- LINE Login -->
-          <button id="login-btn" class="flex items-center justify-center gap-2 rounded-full h-12 px-5 bg-primary text-white font-bold shadow-md hover:bg-primary/90 transition">
-            <div class="line-icon" style="background-color: white;"></div>
-            <span>Login with LINE</span>
+<!-- Email Login container (hidden by default) -->
+<!-- This section is integrated from index.html and styled simply to fit code.html layout -->
+<div id="email-login-modal-anchor" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+  <!-- use pointer-events-none on anchor; inner container will have pointer-events-auto when visible -->
+  <div id="email-login-wrapper" class="pointer-events-none w-full max-w-sm px-6">
+    <div id="email-login-container" class="pointer-events-auto mt-6 hidden">
+      <form id="email-login-form" class="flex flex-col gap-3 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg">
+          <input type="email" id="auth-email" placeholder="電子郵件" required 
+                class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
+          <input type="password" id="auth-password" placeholder="密碼" required
+                class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
+          
+          <button type="submit" class="flex items-center justify-center rounded-full h-12 px-5 bg-primary text-white font-bold shadow-md hover:bg-primary/90 transition">
+              登入
           </button>
 
-          <!-- Email Login 切換 -->
-          <button id="guest-btn" class="rounded-full h-12 px-5 bg-white border text-[#1A3A3A] font-semibold shadow-sm transition">
-            Continue with Email
+          <button type="button" id="toggle-register-btn" class="text-xs text-[#1A3A3A]/70 hover:text-[#1A3A3A] transition">
+              還沒有帳號？點擊註冊
           </button>
-        </div>
-
-        <!-- Email Login Form -->
-        <div id="email-login-container" class="w-full max-w-sm px-4 hidden">
-          <form id="email-login-form" class="flex flex-col gap-3 w-full">
-              <input type="email" id="auth-email" placeholder="電子郵件" required 
-                    class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
-              <input type="password" id="auth-password" placeholder="密碼" required
-                    class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
-              
-              <button type="submit" class="flex items-center justify-center rounded-full h-12 px-5 bg-primary text-white font-bold shadow-md hover:bg-primary/90 transition">
-                  登入
-              </button>
-
-              <button type="button" id="toggle-register-btn" class="text-xs text-[#1A3A3A]/70 hover:text-[#1A3A3A] transition">
-                  還沒有帳號？點擊註冊
-              </button>
-          </form>
-          <p id="auth-message" class="text-center mt-3 text-sm text-red-500"></p>
-        </div>
-
-      </div>
+      </form>
+      <p id="auth-message" class="text-center mt-3 text-sm text-red-500"></p>
     </div>
   </div>
+</div>
 
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -104,12 +146,13 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // DOM 元素
+    // DOM 元素（從 page 主要區域找）
     const loginBtn = document.getElementById('login-btn');
     const guestBtn = document.getElementById('guest-btn');
-    const mainButtonsArea = document.getElementById('main-buttons-area');
+    const mainButtonsArea = document.querySelector('.w-full.max-w-sm.flex.flex-col.gap-4.mt-auto');
 
-    const emailLoginContainer = document.getElementById('email-login-container');
+    // Email login elements (note: we have two email-login-container elements in DOM earlier; ensure we target the visible one)
+    const emailLoginContainer = document.querySelectorAll('#email-login-container')[0]; // the one in modal anchor
     const emailLoginForm = document.getElementById('email-login-form');
     const toggleRegisterBtn = document.getElementById('toggle-register-btn');
     const authMessage = document.getElementById('auth-message');
@@ -140,13 +183,18 @@
         isEmailFormVisible = !isEmailFormVisible;
 
         if (isEmailFormVisible) {
-            mainButtonsArea.classList.add('hidden');
+            // hide main buttons visually
+            if (mainButtonsArea) mainButtonsArea.classList.add('hidden');
+            // show email login container
             emailLoginContainer.classList.remove('hidden');
+            // change guest button label so user can return (we'll change its text)
             guestBtn.textContent = '返回選擇登入方式';
         } else {
+            // show main buttons
+            if (mainButtonsArea) mainButtonsArea.classList.remove('hidden');
+            // hide email login container
             emailLoginContainer.classList.add('hidden');
-            mainButtonsArea.classList.remove('hidden');
-            guestBtn.textContent = 'Continue with Email';
+            guestBtn.textContent = 'Continue as Guest';
             authMessage.textContent = '';
         }
     });
@@ -161,8 +209,9 @@
             ? '已有帳號？點擊登入'
             : '還沒有帳號？點擊註冊';
 
-        emailLoginForm.querySelector('button[type="submit"]').textContent =
-            isRegisterMode ? '註冊帳號' : '登入';
+        // change submit button text
+        const submitBtn = emailLoginForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = isRegisterMode ? '註冊帳號' : '登入';
 
         authMessage.textContent = '';
     });
@@ -189,13 +238,29 @@
 
         if (error) {
             authMessage.textContent = '錯誤：' + error.message;
-        } else if (data.user) {
-            authMessage.textContent = '登入成功！正在跳轉...';
-            
+        } else if (data && data.user) {
+            authMessage.textContent = '成功！正在跳轉...';
+            // 登入成功後導向 main.html
             window.location.href = "main.html";
+        } else {
+            // 有些情況 signUp 會回傳 { data: { user: null, ... }, error: null } (例如需要確認信)
+            if (!error) {
+                authMessage.textContent = isRegisterMode
+                    ? '註冊成功，請檢查您的電子郵件以完成驗證（若有啟用）。'
+                    : '登入請稍候或檢查輸入資訊。';
+            }
+        }
+    });
+
+    // Optional: handle Supabase auth state change (helpful if user returns from OAuth flow)
+    supabase.auth.onAuthStateChange((event, session) => {
+        console.log('Auth event', event, session);
+        // If user is authenticated, redirect to main page
+        if (session && session.user) {
+            // slight delay to allow UI update
+            setTimeout(() => window.location.href = 'main.html', 300);
         }
     });
 </script>
 
-</body>
-</html>
+</body></html>
