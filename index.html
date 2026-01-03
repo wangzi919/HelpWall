@@ -1,266 +1,153 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>HelpWall Login</title>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-<style>
-        .hand-drawn-shadow {
-            box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.1);
-        }
-        .hand-drawn-shadow-hover:hover {
-            box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.15);
-            transform: translate(-1px, -1px);
-        }
-    </style>
-<script>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HelpWall</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Spline+Sans:wght@400;500;700&family=Nunito:wght@400;700;800;900&family=Patrick+Hand&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <!-- LINE LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
       tailwind.config = {
-        darkMode: "class",
+        darkMode: 'class',
         theme: {
           extend: {
-            colors: {
-              primary: "#4CAF50",
-              "background-light": "#FFF9E6", // A warm, parchment-like light yellow
-              "background-dark": "#3C3A44", // A deep, warm gray for dark mode
-              "note-blue": "#D1EAFE",
-              "note-yellow": "#FFFACD",
-              "note-pink": "#FFD1DC",
-              "note-green": "#D4EDDA",
-              "note-purple": "#E6E0FF",
-              "cork": "#D2A679",
-            },
             fontFamily: {
-              display: ["Fredoka", "sans-serif"],
+              sans: ['Fredoka', 'sans-serif'],
+              display: ['Spline Sans', 'sans-serif'],
+              detail: ['Nunito', 'sans-serif'],
+              jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+              handwritten: ['Patrick Hand', 'cursive'],
+              "hand-drawn": ["Nunito", "sans-serif"],
+            },
+            colors: {
+              // Login Page Colors
+              cork: '#D2A679',
+              'note-purple': '#E6E0FF',
+              'note-purple-dark': '#CCC4F2',
+              'note-yellow': '#FFFACD',
+              'note-yellow-dark': '#F2EAB6',
+              'note-green': '#D4EDDA',
+              'note-green-dark': '#B8DBC0',
+              'note-blue': '#D1EAFE',
+              'note-blue-dark': '#B6D6F2',
+              'note-pink': '#FFD1DC',
+              'note-pink-dark': '#F2C2CF',
+              'brand-green': '#4CAF50',
+
+              // Dashboard Colors
+              "primary": "#A0E7E5",
+              "accent": "#FFBF86",
+              "background-light": "#FFFDF5",
+              "background-dark": "#112116",
+              "text-primary": "#4A4A4A",
+              "text-secondary": "#7D7D7D",
+
+              // Task Detail Colors
+              "detail-primary": "#20df60",
+              "accent-yellow": "#FFF5B8",
+              "accent-mint": "#D5F0E5",
+              "accent-blue": "#C9E9FF",
+              "accent-peach": "#FFDDC9",
+              "text-main": "#3D3522",
+              "text-subtle": "#857E6B",
+
+              // User Profile & Wallet Colors
+              "profile-primary": "#308ce8",
+              "wallet-primary": "#2b8cee",
+              "accent-pink": "#FFD8CC",
+              "accent-profile-blue": "#C9E6FF",
+              "accent-profile-mint": "#D5F0E1", 
+
+              // Gratitude Wall Colors
+              "pastel-pink": "#FADADD",
+              "pastel-blue": "#D6EAF8",
+              "pastel-green": "#D5F5E3",
+              "pastel-yellow": "#FCF3CF",
+              "pin-red": "#FF6B6B",
+              "pin-blue": "#4D96FF",
+              "pin-green": "#1DD1A1",
+              "pin-yellow": "#FFC312",
+              "pin-purple": "#9B59B6",
+              "warm-gray": "#5C5C5C",
             },
             borderRadius: {
-              DEFAULT: "1.5rem",
+              "DEFAULT": "1.25rem",
+              "lg": "1.5rem",
+              "xl": "1.875rem",
+              "2xl": "1.5rem", // Overriding for gratitude
+              "3xl": "1.875rem",
+              "full": "9999px"
             },
+            boxShadow: {
+              'soft': '0 4px 10px rgba(0, 0, 0, 0.05)',
+              'sticky': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07)',
+              'sticky-lg': '0 8px 16px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.07)',
+            },
+            animation: {
+              'wiggle': 'wiggle 0.5s ease-in-out infinite',
+            },
+            keyframes: {
+              wiggle: {
+                '0%, 100%': { transform: 'rotate(-3deg)' },
+                '50%': { transform: 'rotate(3deg)' },
+              }
+            }
           },
         },
-      };
+      }
     </script>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
+    <!-- Load Supabase as a global script (UMD) to avoid ESM resolution issues -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.1/",
+        "react": "https://aistudiocdn.com/react@^19.2.1",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
+      }
     }
-  </style>
-  </head>
-<body class="bg-background-light dark:bg-background-dark font-display antialiased">
-<div class="relative min-h-screen w-full overflow-hidden flex flex-col">
-<div class="absolute top-0 left-0 w-full h-full">
-<svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 1024">
-<path class="opacity-30 dark:opacity-20" d="M-28.52 355.5C118.48 404.5 322.48 244.5 487.48 244.5C652.48 244.5 829.147 435.167 968.98 463C1108.81 490.833 1319.48 355.5 1473.48 322.5" fill="none" stroke="#B0E0E6" stroke-linecap="round" stroke-width="150"></path>
-<path class="opacity-30 dark:opacity-20" d="M1537 779C1390 730 1186 890 1021 890C856 890 679.333 699.333 539.5 671.5C399.667 643.667 189 779 -25 812" fill="none" stroke="#FFC0CB" stroke-linecap="round" stroke-width="150"></path>
-<path class="opacity-30 dark:opacity-20" d="M-55.5 90C91.5 139 295.5 -21 460.5 -21C625.5 -21 802.167 169.667 942 197.5C1081.83 225.333 1292.5 90 1446.5 57" fill="none" stroke="#FFFACD" stroke-linecap="round" stroke-width="150"></path>
-</svg>
-</div>
-<main class="relative z-10 flex flex-col flex-grow items-center justify-between p-6 pt-16 pb-8 text-center text-slate-800 dark:text-slate-100">
-<div class="w-full">
-<h1 class="text-6xl font-bold tracking-tighter">HelpWall</h1>
-<p class="mt-2 text-lg text-slate-600 dark:text-slate-300">A little help, right around the corner.</p>
-</div>
-<div class="relative w-full max-w-sm h-96 mt-4 mb-4 flex-grow">
-<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4/5 bg-cork rounded-3xl shadow-lg dark:bg-opacity-80"></div>
-<div class="absolute top-[15%] left-[55%] w-32 h-24 bg-note-blue rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-6 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<p class="text-sm font-semibold">Community</p>
-<svg class="w-10 h-10 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="9" x2="15" y1="10" y2="10"></line><line x1="9" x2="13" y1="13" y2="13"></line></svg>
-</div>
-<div class="absolute top-[30%] left-[8%] w-32 h-24 bg-note-green rounded-lg p-2 flex flex-col items-center justify-center transform rotate-3 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<p class="text-sm font-semibold">You got this!</p>
-<svg class="w-10 h-10 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" x2="9.01" y1="9" y2="9"></line><line x1="15" x2="15.01" y1="9" y2="9"></line></svg>
-</div>
-<div class="absolute top-[45%] left-[30%] w-28 h-28 bg-note-yellow rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-2 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-</div>
-<div class="absolute top-[5%] left-[25%] w-20 h-20 bg-note-yellow rounded-lg p-2 flex flex-col items-center justify-center transform rotate-12 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-green-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" x2="9.01" y1="9" y2="9"></line><line x1="15" x2="15.01" y1="9" y2="9"></line></svg>
-</div>
-<div class="absolute top-[60%] left-[5%] w-28 h-20 bg-note-pink rounded-lg p-2 flex items-center justify-center transform -rotate-8 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-yellow-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<svg class="w-12 h-12 transform scale-x-[-1]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-</div>
-<div class="absolute top-[50%] right-[5%] w-36 h-28 bg-note-blue rounded-lg p-2 flex flex-col items-center justify-center transform rotate-5 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-yellow-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<p class="text-sm font-semibold">Community Help</p>
-<svg class="w-12 h-12 mt-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-</div>
-<div class="absolute top-[2%] left-[2%] w-24 h-24 bg-note-purple rounded-lg p-2 flex flex-col items-center justify-center transform -rotate-12 hand-drawn-shadow">
-<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-400 rounded-full border-2 border-slate-700 dark:border-slate-300"></div>
-<svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 16V8"></path></svg>
-<p class="text-xs mt-1">Help</p>
-</div>
-</div>
-<div class="w-full max-w-sm flex flex-col gap-4 mt-auto">
-<button id="login-btn" class="w-full flex items-center justify-center gap-2 bg-primary text-white text-lg font-semibold py-4 rounded-full shadow-lg transform transition-transform duration-150 ease-in-out hover:scale-105 active:scale-100 hand-drawn-shadow hand-drawn-shadow-hover">
-<img alt="Line app icon" class="w-6 h-6" src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg"/>
-<span>Login with LINE</span>
-</button>
-<button id="guest-btn" class="w-full bg-white dark:bg-slate-200 text-slate-700 dark:text-slate-800 text-lg font-semibold py-4 rounded-full shadow-lg transform transition-transform duration-150 ease-in-out hover:scale-105 active:scale-100 hand-drawn-shadow hand-drawn-shadow-hover">
-                    Continue with Email
-                </button>
-</div>
-</main>
-</div>
-
-<!-- Email Login container (hidden by default) -->
-<!-- This section is integrated from index.html and styled simply to fit code.html layout -->
-<div id="email-login-modal-anchor" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-  <!-- use pointer-events-none on anchor; inner container will have pointer-events-auto when visible -->
-  <div id="email-login-wrapper" class="pointer-events-none w-full max-w-sm px-6">
-    <div id="email-login-container" class="pointer-events-auto mt-6 hidden">
-      <form id="email-login-form" class="flex flex-col gap-3 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg">
-          <input type="email" id="auth-email" placeholder="電子郵件" required 
-                class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
-          <input type="password" id="auth-password" placeholder="密碼" required
-                class="rounded-full h-12 px-5 border border-gray-300 focus:ring-primary focus:border-primary transition">
-          
-          <button type="submit" class="flex items-center justify-center rounded-full h-12 px-5 bg-primary text-white font-bold shadow-md hover:bg-primary/90 transition">
-              登入
-          </button>
-
-          <button type="button" id="toggle-register-btn" class="text-xs text-[#1A3A3A]/70 hover:text-[#1A3A3A] transition">
-              還沒有帳號？點擊註冊
-          </button>
-      </form>
-      <p id="auth-message" class="text-center mt-3 text-sm text-red-500"></p>
-    </div>
-  </div>
-</div>
-
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-    // --------------------------------------------
-    // Supabase Initialization
-    // --------------------------------------------
-    const SUPABASE_URL = 'https://zyeykllnefwvlokrecbv.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5ZXlrbGxuZWZ3dmxva3JlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDg2MjQsImV4cCI6MjA3ODYyNDYyNH0.zTx11lXOPAdeakTXQch9OEO4c7rfhMImNaKDz4G9DIs';
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // DOM 元素（從 page 主要區域找）
-    const loginBtn = document.getElementById('login-btn');
-    const guestBtn = document.getElementById('guest-btn');
-    const mainButtonsArea = document.querySelector('.w-full.max-w-sm.flex.flex-col.gap-4.mt-auto');
-
-    // Email login elements (note: we have two email-login-container elements in DOM earlier; ensure we target the visible one)
-    const emailLoginContainer = document.querySelectorAll('#email-login-container')[0]; // the one in modal anchor
-    const emailLoginForm = document.getElementById('email-login-form');
-    const toggleRegisterBtn = document.getElementById('toggle-register-btn');
-    const authMessage = document.getElementById('auth-message');
-
-    let isRegisterMode = false;
-    let isEmailFormVisible = false;
-
-    // --------------------------------------------
-    // 1. LINE Login
-    // --------------------------------------------
-    loginBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'line',
-            options: {
-                redirectTo: `${window.location.origin}/main.html`
-            }
-        });
-
-        if (error) {
-            alert('LINE 登入啟動失敗: ' + error.message);
-        }
-    });
-
-    // --------------------------------------------
-    // 2. Email Login 切換
-    // --------------------------------------------
-    guestBtn.addEventListener('click', () => {
-        isEmailFormVisible = !isEmailFormVisible;
-
-        if (isEmailFormVisible) {
-            // hide main buttons visually
-            if (mainButtonsArea) mainButtonsArea.classList.add('hidden');
-            // show email login container
-            emailLoginContainer.classList.remove('hidden');
-            // change guest button label so user can return (we'll change its text)
-            guestBtn.textContent = '返回選擇登入方式';
-        } else {
-            // show main buttons
-            if (mainButtonsArea) mainButtonsArea.classList.remove('hidden');
-            // hide email login container
-            emailLoginContainer.classList.add('hidden');
-            guestBtn.textContent = 'Continue as Guest';
-            authMessage.textContent = '';
-        }
-    });
-
-    // --------------------------------------------
-    // 3. 切換「登入 / 註冊」
-    // --------------------------------------------
-    toggleRegisterBtn.addEventListener('click', () => {
-        isRegisterMode = !isRegisterMode;
-
-        toggleRegisterBtn.textContent = isRegisterMode
-            ? '已有帳號？點擊登入'
-            : '還沒有帳號？點擊註冊';
-
-        // change submit button text
-        const submitBtn = emailLoginForm.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.textContent = isRegisterMode ? '註冊帳號' : '登入';
-
-        authMessage.textContent = '';
-    });
-
-    // --------------------------------------------
-    // 4. Email Sign In / Sign Up
-    // --------------------------------------------
-    emailLoginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-
-        authMessage.textContent = isRegisterMode ? '正在註冊...' : '正在登入...';
-
-        let response;
-        if (isRegisterMode) {
-            response = await supabase.auth.signUp({ email, password });
-        } else {
-            response = await supabase.auth.signInWithPassword({ email, password });
-        }
-
-        const { data, error } = response;
-
-        if (error) {
-            authMessage.textContent = '錯誤：' + error.message;
-        } else if (data && data.user) {
-            authMessage.textContent = '成功！正在跳轉...';
-            // 登入成功後導向 main.html
-            window.location.href = "main.html";
-        } else {
-            // 有些情況 signUp 會回傳 { data: { user: null, ... }, error: null } (例如需要確認信)
-            if (!error) {
-                authMessage.textContent = isRegisterMode
-                    ? '註冊成功，請檢查您的電子郵件以完成驗證（若有啟用）。'
-                    : '登入請稍候或檢查輸入資訊。';
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             }
         }
-    });
-
-    // Optional: handle Supabase auth state change (helpful if user returns from OAuth flow)
-    supabase.auth.onAuthStateChange((event, session) => {
-        console.log('Auth event', event, session);
-        // If user is authenticated, redirect to main page
-        if (session && session.user) {
-            // slight delay to allow UI update
-            setTimeout(() => window.location.href = 'main.html', 300);
+        @layer components {
+            .hand-drawn-font {
+                font-family: 'Nunito', sans-serif;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            .thumbtack {
+                position: absolute;
+                top: -6px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 16px;
+                height: 16px;
+                border-radius: 9999px;
+                border: 2px solid #2d3748;
+                box-shadow: inset 0 0 2px rgba(0,0,0,0.2), 1px 1px 2px rgba(0,0,0,0.2);
+            }
         }
-    });
-</script>
-
-</body></html>
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "Copy of HelpWall",
+  "description": "A supportive community platform featuring a digital corkboard for posting help requests and encouraging messages.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
