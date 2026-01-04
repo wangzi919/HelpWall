@@ -243,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
           iconSize: [40, 40],
           iconAnchor: [20, 40]
       });
-      
+
       const userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
       userMarkerRef.current = userMarker;
 
@@ -411,11 +411,11 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                 {!userAvatarUrl && <span className="flex items-center justify-center h-full w-full material-symbols-outlined text-gray-400">person</span>}
               </div>
           </div>
-          <div className="flex items-center justify-center">
+          {/* <div className="flex items-center justify-center">
               <button className="flex items-center justify-center p-2 rounded-full text-text-secondary hover:bg-black/5">
                   <span className="material-symbols-outlined text-2xl">search</span>
               </button>
-          </div>
+          </div> */}
           <div className="flex size-12 shrink-0 items-center justify-end relative" ref={notifRef}>
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
