@@ -45,6 +45,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   // Form values
   const [editDescValue, setEditDescValue] = useState('');
   const [editImgValue, setEditImgValue] = useState('');
+  
+  // 🔽 NEW：Update Location
+  const [isUpdateLocationMode, setIsUpdateLocationMode] = useState(false);
+  const [tempLocation, setTempLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const tempMarkerRef = useRef<any>(null);
+  const [selectedAddress, setSelectedAddress] = useState<string>(''); // 🔽 NEW: 反白框顯示地址
+
 
   useEffect(() => {
     if (!taskId) return;
@@ -53,49 +60,79 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
 
   // Initialize Map when task is loaded
   useEffect(() => {
-    if (task && mapContainerRef.current && !mapInstanceRef.current && typeof L !== 'undefined') {
-        // Updated Map Config: Enable interactions for better usability
-        const map = L.map(mapContainerRef.current, {
-            zoomControl: true,      // Show +/- buttons
-            dragging: true,         // Allow panning
-            scrollWheelZoom: true,  // Allow zooming with scroll
-            doubleClickZoom: true,
-            touchZoom: true
-        }).setView([task.lat, task.lng], 15);
+    if (task && mapContainerRef.current && typeof L !== 'undefined') {
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: true,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
+      }).setView([task.lat, task.lng], 15);
 
-        L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+      L.tileLayer(
+        'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+        { attribution: '&copy; OpenStreetMap contributors' }
+      ).addTo(map);
 
-        // Marker
-        const html = `
-            <div style="
-                width: 24px; height: 24px;
-                background-color: ${task.color || '#F0F0F0'};
-                border: 3px solid white;
-                border-radius: 50%;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            "></div>
-        `;
-        const icon = L.divIcon({ className: '', html, iconSize: [24, 24] });
-        L.marker([task.lat, task.lng], { icon }).addTo(map);
+      // 原本任務 marker
+      const html = `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background-color: ${task.color || '#F0F0F0'};
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        "></div>
+      `;
+      const icon = L.divIcon({ className: '', html, iconSize: [24, 24] });
+      L.marker([task.lat, task.lng], { icon }).addTo(map);
 
-        mapInstanceRef.current = map;
-        
-        // Force a resize calculation after a short delay to ensure map renders correctly in the container
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 100);
+      // 🔽 NEW: 拖曳 marker 模式
+      if (isUpdateLocationMode) {
+        const marker = L.marker([task.lat, task.lng], { draggable: true }).addTo(map);
+        tempMarkerRef.current = marker;
+
+        const updateAddress = async (lat: number, lng: number) => {
+          try {
+            // 使用 OpenStreetMap Nominatim API reverse geocoding
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+            );
+            const data = await res.json();
+            setSelectedAddress(data.display_name || '');
+          } catch (err) {
+            setSelectedAddress('');
+          }
+        };
+
+        marker.on('drag', (e: any) => {
+          const { lat, lng } = e.target.getLatLng();
+          setTempLocation({ lat, lng });
+          updateAddress(lat, lng);
+        });
+
+        // 初始化 address
+        updateAddress(task.lat, task.lng);
+      }
+
+      mapInstanceRef.current = map;
+
+      setTimeout(() => map.invalidateSize(), 100);
     }
 
-    // Cleanup map on unmount
     return () => {
-        if (mapInstanceRef.current) {
-            mapInstanceRef.current.remove();
-            mapInstanceRef.current = null;
-        }
-    }
-  }, [task]);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      if (tempMarkerRef.current) {
+        tempMarkerRef.current.remove();
+        tempMarkerRef.current = null;
+      }
+      setSelectedAddress('');
+    };
+  }, [task, isUpdateLocationMode]);
 
   const initDetail = async () => {
     setIsDataFullyLoaded(false); // Reset loading state on init
@@ -302,6 +339,34 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     onBack(); // Go back to dashboard
   };
 
+    // 🔽 NEW
+  const saveNewLocation = async () => {
+    if (!tempLocation) return alert("請在地圖上點選新位置");
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        lat: tempLocation.lat,
+        lng: tempLocation.lng,
+      })
+      .eq("id", taskId);
+
+    if (error) {
+      alert("更新地點失敗：" + error.message);
+      return;
+    }
+
+    // reset 狀態
+    setIsUpdateLocationMode(false);
+    setTempLocation(null);
+
+    if (tempMarkerRef.current) {
+      tempMarkerRef.current.remove();
+      tempMarkerRef.current = null;
+    }
+
+    initDetail();
+  };
 
   if (!task) return (
       <div className="fixed inset-0 z-50 bg-background-light flex items-center justify-center">
@@ -371,6 +436,16 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                 <button onClick={() => setIsDeleteModalOpen(true)} className="px-4 py-2 rounded-full bg-red-500 shadow-lg font-bold text-white text-sm transition-transform duration-150 active:scale-95 flex items-center gap-1">
                     🗑️ 刪除
                 </button>
+                <button
+                  onClick={() => {
+                    setIsUpdateLocationMode(true);
+                    setTempLocation(null);
+                    setSelectedAddress('');
+                  }}
+                  className="px-4 py-2 rounded-full bg-emerald-600 shadow-lg font-bold text-white text-sm"
+                >
+                  📍 更新地點
+                </button>
             </div>
         )}
 
@@ -385,6 +460,36 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                  <div ref={mapContainerRef} className="w-full h-full z-0"></div>
             </div>
         </div>
+        {isUpdateLocationMode && (
+        <div className="flex flex-col gap-2 mt-3 p-2 border-4 border-emerald-400 rounded-xl bg-emerald-50">
+          <p className="text-sm font-medium text-emerald-800">
+            {selectedAddress || '拖曳標記到新位置以取得地址'}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setIsUpdateLocationMode(false);
+                setTempLocation(null);
+                setSelectedAddress('');
+                if (tempMarkerRef.current) {
+                  tempMarkerRef.current.remove();
+                  tempMarkerRef.current = null;
+                }
+              }}
+              className="flex-1 py-2 rounded-full bg-gray-200 font-bold"
+            >
+              取消
+            </button>
+
+            <button
+              onClick={saveNewLocation}
+              className="flex-1 py-2 rounded-full bg-emerald-500 text-white font-bold"
+            >
+              確認更新
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* Thank You Note */}
         {thanks.length > 0 && (
