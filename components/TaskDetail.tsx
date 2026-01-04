@@ -318,9 +318,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
           <span className="material-symbols-outlined text-3xl">arrow_back</span>
         </button>
         <h2 className="text-lg font-bold flex-1 text-center">幫助詳情</h2>
-        <button className="flex items-center justify-center rounded-full h-12 w-12">
+       {/* <button className="flex items-center justify-center rounded-full h-12 w-12">
           <span className="material-symbols-outlined text-3xl">more_horiz</span>
-        </button>
+        </button>*/}
       </div>
 
       <main className="flex flex-col gap-4 p-4 pb-32">
