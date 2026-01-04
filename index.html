@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>HelpWall</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Spline+Sans:wght@400;500;700&family=Nunito:wght@400;700;800;900&family=Patrick+Hand&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
     
-    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-    <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -31,7 +30,6 @@
               "hand-drawn": ["Nunito", "sans-serif"],
             },
             colors: {
-              // Login Page Colors
               cork: '#D2A679',
               'note-purple': '#E6E0FF',
               'note-purple-dark': '#CCC4F2',
@@ -44,16 +42,12 @@
               'note-pink': '#FFD1DC',
               'note-pink-dark': '#F2C2CF',
               'brand-green': '#4CAF50',
-
-              // Dashboard Colors
               "primary": "#A0E7E5",
               "accent": "#FFBF86",
               "background-light": "#FFFDF5",
               "background-dark": "#112116",
               "text-primary": "#4A4A4A",
               "text-secondary": "#7D7D7D",
-
-              // Task Detail Colors
               "detail-primary": "#20df60",
               "accent-yellow": "#FFF5B8",
               "accent-mint": "#D5F0E5",
@@ -61,15 +55,11 @@
               "accent-peach": "#FFDDC9",
               "text-main": "#3D3522",
               "text-subtle": "#857E6B",
-
-              // User Profile & Wallet Colors
               "profile-primary": "#308ce8",
               "wallet-primary": "#2b8cee",
               "accent-pink": "#FFD8CC",
               "accent-profile-blue": "#C9E6FF",
               "accent-profile-mint": "#D5F0E1", 
-
-              // Gratitude Wall Colors
               "pastel-pink": "#FADADD",
               "pastel-blue": "#D6EAF8",
               "pastel-green": "#D5F5E3",
@@ -85,7 +75,7 @@
               "DEFAULT": "1.25rem",
               "lg": "1.5rem",
               "xl": "1.875rem",
-              "2xl": "1.5rem", // Overriding for gratitude
+              "2xl": "1.5rem",
               "3xl": "1.875rem",
               "full": "9999px"
             },
@@ -107,7 +97,7 @@
         },
       }
     </script>
-    <!-- Load Supabase as a global script (UMD) to avoid ESM resolution issues -->
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="importmap">
     {
@@ -119,8 +109,14 @@
       }
     }
     </script>
+
     <style type="text/tailwindcss">
         @layer base {
+            /* 修正 2：強制 100% 渲染，禁止行動裝置瀏覽器自動膨脹文字大小 */
+            html {
+                -webkit-text-size-adjust: 100%;
+                touch-action: manipulation;
+            }
             .material-symbols-outlined {
                 font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             }
@@ -144,10 +140,10 @@
             }
         }
     </style>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
