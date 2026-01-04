@@ -184,7 +184,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       {/* Header - Logo only */}
       <div className="w-full px-6 py-6 md:px-12 flex items-center z-20">
         {/* Using direct path relative to index.html */}
-        <img src="../img/logo.png" alt={APP_NAME} className="h-24 w-auto object-contain" />
+        <img src="/logo.png" alt={APP_NAME} className="h-24 w-auto object-contain" />
       </div>
 
       <main className="flex-1 w-full max-w-[1440px] mx-auto px-6 md:px-12 grid lg:grid-cols-2 gap-12 lg:gap-24 items-center pb-12">
