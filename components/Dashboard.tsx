@@ -232,11 +232,18 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
       // 使用者 Marker
       const userIcon = L.divIcon({
-          className: '',
-          html: `<div class="...">...</div>`, 
+          className: 'user-marker',
+          html: `<div style="
+              display:flex; align-items:center; justify-content:center;
+              width:40px; height:40px; border-radius:50%;
+              background-color:#A0E7E5; border:3px solid #FFFDF5;
+              box-shadow:0 4px 10px rgba(0,0,0,0.1);
+              font-size:20px;
+          ">📍</div>`,
           iconSize: [40, 40],
           iconAnchor: [20, 40]
       });
+      
       const userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
       userMarkerRef.current = userMarker;
 
