@@ -219,30 +219,37 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   };
 
   const initMap = () => {
-    if (typeof L === 'undefined') return;
+      if (typeof L === 'undefined') return;
 
-    const lat = userLatRef.current;
-    const lng = userLngRef.current;
-    
-    const map = L.map(mapContainerRef.current).setView([lat, lng], 14);
-    
-    L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+      const lat = userLatRef.current;
+      const lng = userLngRef.current;
 
-    // User Marker
-    const userIcon = L.divIcon({
-        className: '',
-        html: `<div class="flex justify-center items-center h-10 w-10 rounded-full bg-[#A0E7E5] border-[3px] border-[#FFFDF5] shadow-[0_4px_10px_rgba(0,0,0,0.1)]"><span class="material-symbols-outlined text-[#4A4A4A] text-2xl" style="font-variation-settings: 'FILL' 1;">person_pin</span></div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40]
-    });
-    const userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
-    userMarkerRef.current = userMarker;
+      const map = L.map(mapContainerRef.current).setView([lat, lng], 14);
 
-    mapInstanceRef.current = map;
-    renderMapMarkers(tasks);
+      L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // 使用者 Marker
+      const userIcon = L.divIcon({
+          className: '',
+          html: `<div class="...">...</div>`, 
+          iconSize: [40, 40],
+          iconAnchor: [20, 40]
+      });
+      const userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+      userMarkerRef.current = userMarker;
+
+      mapInstanceRef.current = map;
+
+      renderMapMarkers(tasks);
+
+      // 這行很重要，確保 Leaflet 知道容器完整尺寸
+      setTimeout(() => {
+          map.invalidateSize();
+      }, 100);
   };
+
 
   const renderMapMarkers = (taskList: Task[]) => {
     if (!mapInstanceRef.current) return;
