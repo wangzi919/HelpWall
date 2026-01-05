@@ -357,7 +357,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
                 {/* Overlay Hint */}
                 <div className={`absolute bottom-6 left-0 right-0 text-center pointer-events-none transition-opacity duration-500 z-30 ${allTorn ? 'opacity-0' : 'opacity-100'}`}>
-                    <p className="inline-block bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white/90 text-sm font-medium shadow-lg animate-pulse border border-white/20">
+                    <p className="inline-block bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white/90 text-sm font-medium shadow-lg animate-pulse border border-white/20 whitespace-nowrap max-w-[90vw] overflow-hidden text-ellipsis">
                         👆 Tip: Click the notes to complete them!
                     </p>
                 </div>

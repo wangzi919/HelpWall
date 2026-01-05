@@ -96,7 +96,7 @@ const StickyNote: React.FC<StickyNoteProps> = ({ data, onTear }) => {
             {data.icon}
         </div>
         {data.content && (
-          <span className="font-bold text-sm lg:text-lg text-slate-800/90 leading-tight font-sans whitespace-pre-line">
+          <span className="font-bold text-xs md:text-sm lg:text-base text-slate-800/90 leading-tight font-sans whitespace-pre-line overflow-hidden line-clamp-3 w-[80%]">
             {data.content}
           </span>
         )}

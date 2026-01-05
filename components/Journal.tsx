@@ -195,21 +195,21 @@ const Journal: React.FC<JournalProps> = ({ currentUser, onNavigate }) => {
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-yellow-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
 
-        <header className="mb-8 lg:mb-12 relative z-10">
-            <h1 className="text-4xl lg:text-5xl font-black text-stone-800 tracking-tight font-hand-drawn">幸福日記</h1>
+        <header className="mb-4 lg:mb-6 relative z-10">
+            <h1 className="text-3xl lg:text-4xl font-black text-stone-800 tracking-tight font-hand-drawn">幸福日記</h1>
             <p className="text-stone-500 font-medium mt-2">記錄善意，看見影響力</p>
         </header>
 
-        <div className="flex-grow flex flex-col justify-center gap-10 relative z-10 px-2">
+        <div className="flex-grow flex flex-col justify-start lg:justify-center gap-4 lg:gap-5 relative z-10 px-2">
             
             {/* Stat 1: Help Given */}
-            <div className="flex flex-col items-start p-6 rounded-3xl bg-[#F0FAF4] border border-[#D1E7DD] relative group hover:scale-[1.02] transition-transform duration-300">
+            <div className="flex flex-col items-start p-4 lg:p-5 rounded-3xl bg-[#F0FAF4] border border-[#D1E7DD] relative group hover:scale-[1.02] transition-transform duration-300">
                 <div className="flex items-center gap-3 mb-2">
                     <span className="material-symbols-outlined text-3xl text-green-600">volunteer_activism</span>
                     <span className="text-stone-500 font-bold tracking-widest text-sm uppercase">Help Given</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-7xl lg:text-8xl font-black text-[#2D5A42] font-hand-drawn leading-none">
+                    <span className="text-5xl lg:text-3xl font-black text-[#2D5A42] font-hand-drawn leading-none">
                         {stats.given}
                     </span>
                     <span className="text-xl text-stone-400 font-bold">次</span>
@@ -218,13 +218,13 @@ const Journal: React.FC<JournalProps> = ({ currentUser, onNavigate }) => {
             </div>
 
             {/* Stat 2: Help Received */}
-            <div className="flex flex-col items-start p-6 rounded-3xl bg-[#FEF2F2] border border-[#FEE2E2] relative group hover:scale-[1.02] transition-transform duration-300">
+            <div className="flex flex-col items-start p-4 lg:p-5 rounded-3xl bg-[#FEF2F2] border border-[#FEE2E2] relative group hover:scale-[1.02] transition-transform duration-300">
                  <div className="flex items-center gap-3 mb-2">
                     <span className="material-symbols-outlined text-3xl text-red-500">favorite</span>
                     <span className="text-stone-500 font-bold tracking-widest text-sm uppercase">Received</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-7xl lg:text-8xl font-black text-[#7F1D1D] font-hand-drawn leading-none">
+                    <span className="text-5xl lg:text-3xl font-black text-[#7F1D1D] font-hand-drawn leading-none">
                         {stats.received}
                     </span>
                     <span className="text-xl text-stone-400 font-bold">次</span>
