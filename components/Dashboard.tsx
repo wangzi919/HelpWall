@@ -550,55 +550,101 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
           </button>
       </div>
 
-      {/* Task Form Modal */}
-      {isTaskFormOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-3">
-                <h2 className="text-lg font-bold">Add New Help Task</h2>
-                <input 
-                    className="border rounded-lg p-2 focus:ring-primary focus:border-primary" 
-                    placeholder="Title" 
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                />
-                <textarea 
-                    className="border rounded-lg p-2 focus:ring-primary focus:border-primary" 
-                    placeholder="Description"
-                    value={newTaskDesc}
-                    onChange={(e) => setNewTaskDesc(e.target.value)}
-                />
-                <div 
-                    onClick={() => setIsTimePickerOpen(true)}
-                    className="border rounded-lg p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 flex justify-between items-center"
-                >
-                    <span className={selectedTime ? "text-black" : "text-gray-500"}>
-                        {selectedTime ? `${selectedTime} minutes` : 'Select Expected Time'}
-                    </span>
-                    <span className="material-symbols-outlined text-base">expand_more</span>
-                </div>
-                <input 
-                    className="border rounded-lg p-2 focus:ring-primary focus:border-primary" 
-                    placeholder="Image URL (Optional)" 
-                    value={newTaskImage}
-                    onChange={(e) => setNewTaskImage(e.target.value)}
-                />
-                <div className="flex gap-2 mt-2">
-                    <button 
-                        onClick={() => setIsTaskFormOpen(false)}
-                        className="flex-1 text-gray-500 py-2 border rounded-lg hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleCreateTask}
-                        className="flex-1 bg-primary text-text-primary font-bold rounded-lg py-2 hover:opacity-90 shadow-sm"
-                    >
-                        Submit
-                    </button>
-                </div>
-            </div>
+     {/* Task Form Modal */}
+{isTaskFormOpen && (
+  <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-md sm:items-center p-0 sm:p-4 animate-in fade-in duration-200">
+    {/* 點擊背景關閉 */}
+    <div className="absolute inset-0" onClick={() => setIsTaskFormOpen(false)} />
+    
+    <div className="relative w-full max-w-md transform rounded-t-[2.5rem] bg-white p-8 shadow-2xl transition-all sm:rounded-[2rem] animate-in slide-in-from-bottom-10 duration-300">
+      
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-black tracking-tight text-text-primary">發佈新任務</h2>
+        <button 
+          onClick={() => setIsTaskFormOpen(false)}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200"
+        >
+          <span className="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <div className="space-y-5">
+        {/* 標題輸入 */}
+        <div className="space-y-1.5">
+          <label className="ml-1 text-sm font-bold text-text-secondary">任務主題</label>
+          <input 
+            className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner" 
+            placeholder="例如：幫忙取外送、借用充電線" 
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+          />
         </div>
-      )}
+
+        {/* 描述輸入 */}
+        <div className="space-y-1.5">
+          <label className="ml-1 text-sm font-bold text-text-secondary">細節說明</label>
+          <textarea 
+            rows={3}
+            className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner" 
+            placeholder="請描述具體需求..."
+            value={newTaskDesc}
+            onChange={(e) => setNewTaskDesc(e.target.value)}
+          />
+        </div>
+
+        {/* 時間選擇器：改為 Chips 樣式 */}
+        <div className="space-y-2.5">
+          <label className="ml-1 text-sm font-bold text-text-secondary">預期時間 (支付 {selectedTime ? selectedTime / 5 : 0} 時間幣)</label>
+          <div className="grid grid-cols-3 gap-2">
+            {timeOptions.map(t => (
+              <button
+                key={t}
+                onClick={() => setSelectedTime(t)}
+                className={`rounded-xl py-2.5 text-sm font-bold transition-all ${
+                  selectedTime === t 
+                    ? 'bg-black text-white shadow-lg scale-105' 
+                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                {t} min
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 圖片連結 */}
+        <div className="space-y-1.5">
+          <label className="ml-1 text-sm font-bold text-text-secondary">圖片連結 (選填)</label>
+          <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 shadow-inner">
+            <span className="material-symbols-outlined text-gray-400">image</span>
+            <input 
+              className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm" 
+              placeholder="https://..." 
+              value={newTaskImage}
+              onChange={(e) => setNewTaskImage(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* 按鈕組 */}
+        <div className="mt-8 flex gap-3 pt-2">
+          <button 
+            onClick={() => setIsTaskFormOpen(false)}
+            className="flex-1 rounded-full py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            取消
+          </button>
+          <button 
+            onClick={handleCreateTask}
+            className="flex-1 rounded-full bg-primary py-4 text-sm font-black text-text-primary shadow-soft hover:opacity-90 active:scale-95 transition-all"
+          >
+            確認發佈
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Time Picker Modal */}
       {isTimePickerOpen && (
