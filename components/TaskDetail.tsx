@@ -76,17 +76,33 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
 
       // 原本任務 marker
       const html = `
+      <div style="
+        position: relative;
+        width: 32px;
+        height: 32px;
+        background: ${'#FF5252'};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      ">
         <div style="
-          width: 24px;
-          height: 24px;
-          background-color: ${task.color || '#F0F0F0'};
-          border: 3px solid white;
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          width: 16px;
+          height: 16px;
+          background: white;
           border-radius: 50%;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         "></div>
+      </div>
       `;
-      const icon = L.divIcon({ className: '', html, iconSize: [24, 24] });
-      L.marker([task.lat, task.lng], { icon }).addTo(map);
+
+      const icon = L.divIcon({
+        className: '',
+        html,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+      });
 
       // 🔽 NEW: 拖曳 marker 模式
       if (isUpdateLocationMode) {
