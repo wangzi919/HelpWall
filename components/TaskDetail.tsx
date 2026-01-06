@@ -103,6 +103,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         iconSize: [32, 32],
         iconAnchor: [16, 32],
       });
+      L.marker([task.lat, task.lng], { icon }).addTo(map);
 
       // 🔽 NEW: 拖曳 marker 模式
       if (isUpdateLocationMode) {
