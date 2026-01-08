@@ -35,7 +35,6 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   
   // Modal States
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   
   // New Task Form Data
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -51,6 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const userLatRef = useRef<number>(25.0330); // Default Taipei
   const userLngRef = useRef<number>(121.5654);
   const [currentUserLoc, setCurrentUserLoc] = useState<{lat: number, lng: number}>({ lat: 25.0330, lng: 121.5654 });
+  // New: Track if real GPS location has been acquired
+  const [isLocationReady, setIsLocationReady] = useState(false);
 
   const timeOptions = [5, 10, 15, 20, 25, 30];
 
@@ -105,6 +106,9 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
           userLatRef.current = lat;
           userLngRef.current = lng;
           setCurrentUserLoc({ lat, lng });
+
+          // Mark location as ready (Real GPS found)
+          setIsLocationReady(true);
           
           // If map is already active, re-center and move user marker
           if (mapInstanceRef.current) {
@@ -550,127 +554,117 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
           </button>
       </div>
 
-     {/* Task Form Modal */}
-{isTaskFormOpen && (
-  <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-md sm:items-center p-0 sm:p-4 animate-in fade-in duration-200">
-    {/* 點擊背景關閉 */}
-    <div className="absolute inset-0" onClick={() => setIsTaskFormOpen(false)} />
-    
-    <div className="relative w-full max-w-md transform rounded-t-[2.5rem] bg-white p-8 shadow-2xl transition-all sm:rounded-[2rem] animate-in slide-in-from-bottom-10 duration-300">
-      
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-black tracking-tight text-text-primary">發佈新任務</h2>
-        <button 
-          onClick={() => setIsTaskFormOpen(false)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200"
-        >
-          <span className="material-symbols-outlined text-xl">close</span>
-        </button>
-      </div>
-
-      <div className="space-y-5">
-        {/* 標題輸入 */}
-        <div className="space-y-1.5">
-          <label className="ml-1 text-sm font-bold text-text-secondary">任務主題</label>
-          <input 
-            className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner" 
-            placeholder="例如：幫忙取外送、借用充電線" 
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-          />
-        </div>
-
-        {/* 描述輸入 */}
-        <div className="space-y-1.5">
-          <label className="ml-1 text-sm font-bold text-text-secondary">細節說明</label>
-          <textarea 
-            rows={3}
-            className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner" 
-            placeholder="請描述具體需求..."
-            value={newTaskDesc}
-            onChange={(e) => setNewTaskDesc(e.target.value)}
-          />
-        </div>
-
-        {/* 時間選擇器：改為 Chips 樣式 */}
-        <div className="space-y-2.5">
-          <label className="ml-1 text-sm font-bold text-text-secondary">預期時間 (支付 {selectedTime ? selectedTime / 5 : 0} 時間幣)</label>
-          <div className="grid grid-cols-3 gap-2">
-            {timeOptions.map(t => (
-              <button
-                key={t}
-                onClick={() => setSelectedTime(t)}
-                className={`rounded-xl py-2.5 text-sm font-bold transition-all ${
-                  selectedTime === t 
-                    ? 'bg-black text-white shadow-lg scale-105' 
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                {t} min
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 圖片連結 */}
-        <div className="space-y-1.5">
-          <label className="ml-1 text-sm font-bold text-text-secondary">圖片連結 (選填)</label>
-          <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 shadow-inner">
-            <span className="material-symbols-outlined text-gray-400">image</span>
-            <input 
-              className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm" 
-              placeholder="https://..." 
-              value={newTaskImage}
-              onChange={(e) => setNewTaskImage(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* 按鈕組 */}
-        <div className="mt-8 flex gap-3 pt-2">
-          <button 
-            onClick={() => setIsTaskFormOpen(false)}
-            className="flex-1 rounded-full py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
-          >
-            取消
-          </button>
-          <button 
-            onClick={handleCreateTask}
-            className="flex-1 rounded-full bg-primary py-4 text-sm font-black text-text-primary shadow-soft hover:opacity-90 active:scale-95 transition-all"
-          >
-            確認發佈
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-      {/* Time Picker Modal */}
-      {isTimePickerOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-xl p-4 w-64 shadow-lg">
-                <h3 className="text-lg font-bold mb-3">Select Expected Time</h3>
-                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                    {timeOptions.map(t => (
-                        <div 
-                            key={t}
-                            onClick={() => {
-                                setSelectedTime(t);
-                                setIsTimePickerOpen(false);
-                            }}
-                            className="p-2 border rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer text-center"
+      {/* Updated Task Form Modal (Centered Card Style) */}
+      {isTaskFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            {/* Click backdrop to close */}
+            <div className="absolute inset-0" onClick={() => setIsTaskFormOpen(false)} />
+            
+            {/* 
+               Constraints:
+               1. Centered (flex items-center justify-center on parent)
+               2. max-h-[85vh] to ensure it fits on mobile with keyboard potentially visible, or just small screens
+               3. rounded-3xl for consistent card look
+            */}
+            <div className="relative w-full max-w-md max-h-[85vh] flex flex-col transform rounded-[2rem] bg-white shadow-2xl transition-all animate-in zoom-in-95 duration-200">
+            
+                {/* Modal Content Wrapper - added scrollbar hiding classes */}
+                <div className="overflow-y-auto p-6 sm:p-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                    <div className="mb-6 flex items-center justify-between">
+                        <h2 className="text-2xl font-black tracking-tight text-text-primary">發佈新任務</h2>
+                        <button 
+                        onClick={() => setIsTaskFormOpen(false)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200"
                         >
-                            {t} minutes
+                        <span className="material-symbols-outlined text-xl">close</span>
+                        </button>
+                    </div>
+
+                    <div className="space-y-5">
+                        {/* Title Input */}
+                        <div className="space-y-1.5">
+                            <label className="ml-1 text-sm font-bold text-text-secondary">任務主題</label>
+                            <input 
+                                className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner" 
+                                placeholder="例如：幫忙取外送、借用充電線" 
+                                value={newTaskTitle}
+                                onChange={(e) => setNewTaskTitle(e.target.value)}
+                            />
                         </div>
-                    ))}
+
+                        {/* Description Input */}
+                        <div className="space-y-1.5">
+                            <label className="ml-1 text-sm font-bold text-text-secondary">細節說明</label>
+                            <textarea 
+                                rows={3}
+                                className="w-full rounded-2xl border-none bg-gray-50 px-4 py-3 text-text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary shadow-inner resize-none" 
+                                placeholder="請描述具體需求..."
+                                value={newTaskDesc}
+                                onChange={(e) => setNewTaskDesc(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Time Picker Chips */}
+                        <div className="space-y-2.5">
+                            <label className="ml-1 text-sm font-bold text-text-secondary">預期時間 (支付 {selectedTime ? selectedTime / 5 : 0} 時間幣)</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {timeOptions.map(t => (
+                                <button
+                                    key={t}
+                                    onClick={() => setSelectedTime(t)}
+                                    className={`rounded-xl py-2.5 text-sm font-bold transition-all ${
+                                    selectedTime === t 
+                                        ? 'bg-black text-white shadow-lg scale-105' 
+                                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {t} min
+                                </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Image URL */}
+                        <div className="space-y-1.5">
+                            <label className="ml-1 text-sm font-bold text-text-secondary">圖片連結 (選填)</label>
+                            <div className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 shadow-inner">
+                                <span className="material-symbols-outlined text-gray-400">image</span>
+                                <input 
+                                className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm placeholder:text-gray-400" 
+                                placeholder="https://..." 
+                                value={newTaskImage}
+                                onChange={(e) => setNewTaskImage(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Location Status Hint (Re-integrated) */}
+                        <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-2 border border-dashed border-gray-200">
+                             <span className={`material-symbols-outlined text-lg ${isLocationReady ? 'text-green-500' : 'text-orange-500'}`}>
+                                {isLocationReady ? 'my_location' : 'location_disabled'}
+                             </span>
+                             <span className={`text-xs font-bold ${isLocationReady ? 'text-gray-500' : 'text-orange-500'}`}>
+                                {isLocationReady ? '已鎖定您的精確位置' : '尚未定位 (將使用預設位置)'}
+                             </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="mt-4 flex gap-3 pt-2">
+                            <button 
+                                onClick={() => setIsTaskFormOpen(false)}
+                                className="flex-1 rounded-full py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button 
+                                onClick={handleCreateTask}
+                                className="flex-1 rounded-full bg-primary py-4 text-sm font-black text-text-primary shadow-soft hover:opacity-90 active:scale-95 transition-all"
+                            >
+                                確認發佈
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button 
-                    onClick={() => setIsTimePickerOpen(false)}
-                    className="text-sm text-gray-500 mt-3 w-full"
-                >
-                    Cancel
-                </button>
             </div>
         </div>
       )}
