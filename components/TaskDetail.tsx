@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Task, ThanksCard } from '../types';
+import TermsModal from './TermsModal';
 
 // Declare Leaflet global type
 declare const L: any;
@@ -60,6 +61,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   const tempMarkerRef = useRef<any>(null);
   const [selectedAddress, setSelectedAddress] = useState<string>(''); // 🔽 NEW: 反白框顯示地址
 
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   useEffect(() => {
     if (!taskId) return;
@@ -220,6 +222,22 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   const hasApplied = task?.applicants?.includes(currentUser?.id);
 
   // --- Actions ---
+  // const triggerAcceptTask = () => {
+  //   if (!currentUser) return alert("Please login first.");
+  //   if (hasApplied) return;
+  //   setIsTermsOpen(true); // Show terms before accepting/applying
+  // };
+
+  const handleTermsConfirmed = async () => {
+  setIsTermsOpen(false); // 先關條款
+
+  try {
+    await handleAcceptTask(); // 或 handleApplyTask()，根據你的流程
+  } catch (err) {
+    console.error(err);
+  }
+};
+
   const handleApplyTask = async () => {
     if (!currentUser) return alert("Please login first.");
     if (!task) return;
@@ -673,7 +691,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
           <div className="pointer-events-auto">
             {showAcceptBtn && (
                 <button 
-                    onClick={handleAcceptTask} 
+                    onClick={() => {
+                      setIsTermsOpen(true);
+                    }}
+
                     disabled={hasApplied}
                     className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90 ${hasApplied ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-accent-mint'}`}
                 >
@@ -699,6 +720,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       </div>
 
       {/* --- Modals --- */}
+      <TermsModal
+        isOpen={isTermsOpen}
+        onClose={() => setIsTermsOpen(false)}
+        onConfirm={handleTermsConfirmed}
+        actionType="accept"
+      />
       {/* Applicant Review Modal */}
       {isReviewModalOpen && selectedApplicant && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">

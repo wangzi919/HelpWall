@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from '../services/supabaseClient';
 import { Task, AppView } from '../types';
 import BottomNav from './BottomNav';
+import TermsModal from './TermsModal';
 
 // Declare Leaflet global type to avoid TS errors
 declare const L: any;
@@ -35,7 +36,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   
   // Modal States
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
   // New Task Form Data
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
@@ -371,11 +373,20 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
     }
   };
 
-  const handleCreateTask = async () => {
+  const triggerCreateTask = async () => {
     if (!newTaskTitle.trim()) return alert("請輸入任務標題");
     if (!selectedTime) return alert("請選擇預期時間");
     if (!currentUser) return alert("請先登入");
+   
+    // Show Terms Modal before proceeding
+    setIsTermsOpen(true);
+  };
 
+  const handleCreateTask = async () => {
+    // 立即關閉所有 Modal，回到主畫面
+    setIsTermsOpen(false);
+    setIsTaskFormOpen(false);
+    
     // Location Safety Check
     if (!isLocationReady) {
         const confirmDefault = window.confirm(
@@ -433,6 +444,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
     } catch (error: any) {
         alert("新增失敗：" + error.message);
+        setIsTaskFormOpen(true); // 失敗時重新開啟讓使用者檢查
     }
   };
 
@@ -758,7 +770,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                                 取消
                             </button>
                             <button 
-                                onClick={handleCreateTask}
+                                onClick={triggerCreateTask}
                                 className="flex-1 rounded-full bg-primary py-4 text-sm font-black text-text-primary shadow-soft hover:opacity-90 active:scale-95 transition-all"
                             >
                                 確認發佈
@@ -769,7 +781,13 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
             </div>
         </div>
       )}
-
+    {/* Terms and Conditions Modal */}
+        <TermsModal 
+            isOpen={isTermsOpen} 
+            onClose={() => setIsTermsOpen(false)} 
+            onConfirm={handleCreateTask}
+            actionType="post"
+        />
       <BottomNav currentView={AppView.DASHBOARD} onNavigate={onNavigate} />
     </div>
   );
