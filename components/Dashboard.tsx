@@ -53,6 +53,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const [currentUserLoc, setCurrentUserLoc] = useState<{lat: number, lng: number}>({ lat: 25.0330, lng: 121.5654 });
   // New: Track if real GPS location has been acquired
   const [isLocationReady, setIsLocationReady] = useState(false);
+  // Track watch ID to clear it on unmount
+  const watchIdRef = useRef<number | null>(null);
 
   const timeOptions = [5, 10, 15, 20, 25, 30];
 
@@ -98,31 +100,44 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
     fetchNotifications();
     loadTasks();
     
-    // 3. Get Geolocation
+    // 3. Continuous Geolocation Tracking (watchPosition)
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      // Clear existing watch if any
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+
+      watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+
+          // Update Refs (Critical for Heartbeat to pick up fresh data)
           userLatRef.current = lat;
           userLngRef.current = lng;
+
+          // Update State (Triggers UI updates if needed)
           setCurrentUserLoc({ lat, lng });
 
-          // Mark location as ready (Real GPS found)
           setIsLocationReady(true);
           
-          // If map is already active, re-center and move user marker
-          if (mapInstanceRef.current) {
-             mapInstanceRef.current.setView([lat, lng], 14);
-             if (userMarkerRef.current) {
-                 userMarkerRef.current.setLatLng([lat, lng]);
-             }
+          // Update Map Marker Live (if map is open)
+          if (mapInstanceRef.current && userMarkerRef.current) {
+              userMarkerRef.current.setLatLng([lat, lng]);
+             // Optional: If this is the FIRST fix, maybe center map? 
+             // But usually better not to auto-pan constantly as it disturbs browsing.
+             // We rely on the "Locate Me" button for centering.
           }
         },
         (error) => {
-          console.error("Geo error:", error);
+          console.error("Geo watch error:", error);
+          // Don't alert continuously, just log
         },
-        { enableHighAccuracy: true }
+        { 
+          enableHighAccuracy: true,
+          maximumAge: 10000, // Accept cached positions up to 10s old
+          timeout: 10000 
+        }
       );
     }
 
@@ -133,7 +148,13 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+        }
+    };
 
   }, [currentUser]);
 
@@ -148,9 +169,11 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   }, [viewMode]);
 
   // --- Heartbeat Logic Start ---
+  // The heartbeat runs on an interval. Because it reads from userLatRef.current,
+  // and watchPosition updates that ref continuously, the heartbeat will automatically
+  // send the updated location without needing code changes here.
   const sendHeartbeat = async (lat: number, lng: number) => {
     try {
-      // Suppress error if RPC is missing to avoid console spam, but try to call it.
       const { error } = await supabase.rpc("heartbeat_presence", {
         lat,
         lng,
@@ -166,24 +189,21 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   useEffect(() => {
     if (!currentUser) return;
 
-    // Trigger logic periodically
     const tick = () => {
       const lat = userLatRef.current;
       const lng = userLngRef.current;
+      // Only send if we have a valid non-zero (or non-default if you prefer) location, 
+      // or just send whatever the ref has.
       if (lat && lng) {
         void sendHeartbeat(lat, lng);
       }
     };
 
-    // 1. Initial trigger (only if we have coordinates)
-    // We check userLatRef to ensure we don't send 0,0 or default if not ready, 
-    // though the default is Taipei.
     if (userLatRef.current) {
         tick();
     }
 
-    // 2. Interval trigger every 30 seconds
-    const intervalId = setInterval(tick, 30000);
+    const intervalId = setInterval(tick, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
   }, [currentUser]);
@@ -229,7 +249,9 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
       const lat = userLatRef.current;
       const lng = userLngRef.current;
 
-      const map = L.map(mapContainerRef.current).setView([lat, lng], 14);
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false // We will add zoom control manually or leave it minimal
+      }).setView([lat, lng], 14);
 
       L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors'
@@ -313,6 +335,39 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         });
 
         markersRef.current.push(marker);
+    }
+  };
+
+  const handleManualLocate = () => {
+      if (!mapInstanceRef.current) return;
+      
+      if (!isLocationReady) {
+          alert("正在定位中，請稍候...");
+          // If permission was denied, this might trigger the browser prompt again in some contexts,
+          // or at least attempt to get position one-shot.
+          navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  userLatRef.current = latitude;
+                  userLngRef.current = longitude;
+                  setIsLocationReady(true);
+                  if (mapInstanceRef.current) {
+                      mapInstanceRef.current.setView([latitude, longitude], 15);
+                      if (userMarkerRef.current) {
+                          userMarkerRef.current.setLatLng([latitude, longitude]);
+                      }
+                  }
+              },
+              (err) => {
+                  alert("無法取得位置，請檢查瀏覽器權限設定。");
+              },
+              { enableHighAccuracy: true }
+          );
+      } else {
+          // Simply center map
+          const lat = userLatRef.current;
+          const lng = userLngRef.current;
+          mapInstanceRef.current.setView([lat, lng], 15, { animate: true });
     }
   };
 
@@ -558,8 +613,19 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
       {/* Map View */}
       {viewMode === 'map' && (
-         <main className="flex-grow w-full h-[calc(100vh-180px)] z-0">
-             <div ref={mapContainerRef} className="w-full h-full"></div>
+         <main className="flex-grow w-full h-[calc(100vh-180px)] z-0 relative">
+             <div ref={mapContainerRef} className="w-full h-full z-0"></div>
+             
+             {/* My Location FAB on Map */}
+             <button 
+                onClick={handleManualLocate}
+                className="absolute bottom-6 right-4 z-[400] flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:text-blue-500 hover:bg-gray-50 transition-colors"
+                title="Locate Me"
+             >
+                <span className="material-symbols-outlined text-2xl">
+                    {isLocationReady ? 'my_location' : 'location_searching'}
+                </span>
+             </button>
          </main>
       )}
 
