@@ -15,12 +15,16 @@ interface UserData {
   uid: string;
   name: string;
   image_url: string;
+  help_count?: number; // Added for review stats
+  thanks_count?: number; // Added for review stats
 }
 
 const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [publisher, setPublisher] = useState<UserData | null>(null);
+  const [helper, setHelper] = useState<UserData | null>(null);
   const [thanks, setThanks] = useState<ThanksCard[]>([]);
+  const [applicantsData, setApplicantsData] = useState<UserData[]>([]);
   
   // Loading State to prevent button flash
   const [isDataFullyLoaded, setIsDataFullyLoaded] = useState(false);
@@ -41,6 +45,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   // Thanks Modal
   const [isThanksModalOpen, setIsThanksModalOpen] = useState(false);
   const [thanksMessage, setThanksMessage] = useState('');
+  
+  // Applicant Review Modal
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState<UserData | null>(null);
 
   // Form values
   const [editDescValue, setEditDescValue] = useState('');
@@ -165,6 +173,20 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         // Load Publisher
         const { data: userData } = await supabase.from("user").select("*").eq("uid", taskData.user_uid).single();
         setPublisher(userData);
+        
+        // Load Helper if exists
+        if (taskData.helper_uid) {
+            const { data: helperData } = await supabase.from("user").select("*").eq("uid", taskData.helper_uid).single();
+            setHelper(helperData);
+        } else {
+            setHelper(null);
+        }
+
+        // Load Applicants if I am the owner and review is required
+        if (taskData.requires_review && taskData.user_uid === currentUser?.id && taskData.applicants && taskData.applicants.length > 0) {
+            const { data: applicants } = await supabase.from("user").select("*").in("uid", taskData.applicants);
+            setApplicantsData(applicants || []);
+        }
     }
 
     // 2. Thanks Card (Using task_id as PK query)
@@ -193,11 +215,42 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   
   // Show "Send Thanks" only if completed, I am owner, and haven't sent yet
   const showSendThanksBtn = isDataFullyLoaded && isCompleted && isOwner && !hasSentThanks;
+  
+  // Check if I have already applied
+  const hasApplied = task?.applicants?.includes(currentUser?.id);
 
   // --- Actions ---
+  const handleApplyTask = async () => {
+    if (!currentUser) return alert("Please login first.");
+    if (!task) return;
+
+    // Use JSONB array append (Assuming 'applicants' is a text[] or jsonb column)
+    // Since we don't have direct array_append in simple JS client easily without knowing DB exact type,
+    // we fetch current, append, and update.
+    const currentApplicants = task.applicants || [];
+    if (currentApplicants.includes(currentUser.id)) return;
+
+    const newApplicants = [...currentApplicants, currentUser.id];
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({ applicants: newApplicants })
+      .eq("id", taskId);
+
+    if (error) return alert("申請失敗：" + error.message);
+
+    alert("申請已送出，請等待發布者審核！");
+    initDetail();
+  };
 
   const handleAcceptTask = async () => {
     if (!currentUser) return alert("Please login first.");
+
+    // Logic Split: Instant Accept vs Apply
+    if (task?.requires_review) {
+        await handleApplyTask();
+        return;
+    }
     
     // Double check status from DB before update to prevent race condition
     const { data: currentTask } = await supabase
@@ -222,6 +275,40 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
 
     alert("Task accepted!");
     initDetail(); // Reload
+  };
+
+  const handleReviewApplicant = async (applicant: UserData) => {
+     // Fetch Stats for this applicant
+     const [help, thanks] = await Promise.all([
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("helper_uid", applicant.uid).eq("status", "completed"),
+        supabase.from("thanks_card").select("*", { count: "exact", head: true }).eq("receiver_uid", applicant.uid)
+     ]);
+
+     setSelectedApplicant({
+         ...applicant,
+         help_count: help.count || 0,
+         thanks_count: thanks.count || 0
+     });
+     setIsReviewModalOpen(true);
+  };
+
+  const handleApproveApplicant = async () => {
+      if (!selectedApplicant || !task) return;
+
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+            helper_uid: selectedApplicant.uid,
+            status: "in_progress",
+            // Clear applicants or keep them? Keep them is fine.
+        })
+        .eq("id", taskId);
+
+      if (error) return alert("審核失敗：" + error.message);
+      
+      setIsReviewModalOpen(false);
+      alert("已同意接取！");
+      initDetail();
   };
 
   const handleCompleteTask = () => {
@@ -411,16 +498,40 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
             <div 
                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-16 w-16 bg-gray-200"
                 style={{ backgroundImage: publisher?.image_url ? `url('${publisher.image_url}')` : undefined }}
-            ></div>
+            >
+               {!publisher?.image_url && <span className="flex h-full w-full items-center justify-center material-symbols-outlined text-gray-400">person</span>}
+            </div>
             <div className="flex-1">
+                <p className="text-xs text-text-subtle mb-0.5">Published by</p>
                 <p className="text-lg font-bold">{publisher?.name || 'Unknown'}</p>
                 <p className="text-sm text-text-subtle">{task.created_at ? timeAgo(task.created_at) : ''}</p>
             </div>
         </div>
 
+        {/* Helper Info (If Assigned) */}
+        {helper && (
+            <div className="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl shadow-soft border border-blue-100 dark:border-blue-800">
+                <div 
+                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-16 w-16 bg-gray-200 shadow-sm border-2 border-white"
+                    style={{ backgroundImage: helper.image_url ? `url('${helper.image_url}')` : undefined }}
+                >
+                  {!helper.image_url && <span className="flex h-full w-full items-center justify-center material-symbols-outlined text-gray-400">person</span>}
+                </div>
+                <div className="flex-1">
+                    <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-0.5">Accepted By</p>
+                    <p className="text-lg font-bold">{helper.name}</p>
+                </div>
+            </div>
+        )}
+
         {/* Task Card */}
         <div className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-soft flex flex-col gap-4 relative">
-            <h1 className="text-[28px] font-extrabold leading-tight">{task.title}</h1>
+            <h1 className="text-[28px] font-extrabold leading-tight flex items-center gap-2">
+                {task.requires_review && (
+                    <span className="material-symbols-outlined text-red-500 text-2xl" title="需審核">security</span>
+                )}
+                {task.title}
+            </h1>
             <p className="text-base leading-relaxed whitespace-pre-wrap">
                 {task.description}
             </p>
@@ -440,6 +551,43 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                 </span>
             </div>
         </div>
+
+        {/* APPLICANTS SECTION (Owner View) */}
+        {isOwner && task.requires_review && !isAssigned && (
+             <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex flex-col gap-3">
+                 <div className="flex items-center justify-between">
+                     <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                         <span className="material-symbols-outlined text-red-500">group</span>
+                         申請者名單 ({applicantsData.length})
+                     </h3>
+                     <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-lg">需審核同意</span>
+                 </div>
+                 
+                 {applicantsData.length === 0 ? (
+                     <div className="text-center text-gray-400 text-sm py-4">目前尚無人申請</div>
+                 ) : (
+                     <div className="flex flex-col gap-2">
+                         {applicantsData.map(app => (
+                             <div key={app.uid} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm">
+                                 <div className="flex items-center gap-3">
+                                     <div 
+                                        className="w-10 h-10 rounded-full bg-cover bg-center bg-gray-200"
+                                        style={{ backgroundImage: app.image_url ? `url('${app.image_url}')` : undefined }}
+                                     ></div>
+                                     <span className="font-bold text-gray-800">{app.name}</span>
+                                 </div>
+                                 <button 
+                                    onClick={() => handleReviewApplicant(app)}
+                                    className="px-3 py-1.5 bg-black text-white text-xs font-bold rounded-full hover:opacity-80"
+                                 >
+                                     審核
+                                 </button>
+                             </div>
+                         ))}
+                     </div>
+                 )}
+             </div>
+        )}
 
         {/* Action Buttons for Owner */}
         {showEditBtns && (
@@ -524,8 +672,15 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       <div className="fixed bottom-0 left-0 w-full p-4 bg-background-light dark:bg-background-dark pointer-events-none z-40">
           <div className="pointer-events-auto">
             {showAcceptBtn && (
-                <button onClick={handleAcceptTask} className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-accent-mint text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90">
-                    Accept This Task
+                <button 
+                    onClick={handleAcceptTask} 
+                    disabled={hasApplied}
+                    className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90 ${hasApplied ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-accent-mint'}`}
+                >
+                    {hasApplied 
+                        ? '已申請，等待發布者審核' 
+                        : (task.requires_review ? '申請接取 (需審核)' : 'Accept This Task')
+                    }
                 </button>
             )}
             
@@ -544,6 +699,61 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       </div>
 
       {/* --- Modals --- */}
+      {/* Applicant Review Modal */}
+      {isReviewModalOpen && selectedApplicant && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-5 border border-red-100 relative overflow-hidden">
+                {/* Header Decoration */}
+                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-400 to-orange-400"></div>
+
+                <div className="flex flex-col items-center gap-3 pt-4">
+                    <div 
+                        className="w-20 h-20 rounded-full bg-cover bg-center border-4 border-white shadow-md bg-gray-200"
+                        style={{ backgroundImage: selectedApplicant.image_url ? `url('${selectedApplicant.image_url}')` : undefined }}
+                    ></div>
+                    <div className="text-center">
+                        <h3 className="text-2xl font-black text-gray-800">{selectedApplicant.name}</h3>
+                        <p className="text-sm text-gray-500">申請接取您的任務</p>
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-green-50 p-3 rounded-xl text-center">
+                        <p className="text-xs font-bold text-gray-500 uppercase">已完成幫助</p>
+                        <p className="text-2xl font-black text-green-600">{selectedApplicant.help_count}</p>
+                    </div>
+                    <div className="bg-pink-50 p-3 rounded-xl text-center">
+                        <p className="text-xs font-bold text-gray-500 uppercase">收到感謝</p>
+                        <p className="text-2xl font-black text-pink-500">{selectedApplicant.thanks_count}</p>
+                    </div>
+                </div>
+
+                {/* Safety Warning */}
+                <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex gap-3 items-start">
+                    <span className="material-symbols-outlined text-red-500 text-xl shrink-0 mt-0.5">warning</span>
+                    <p className="text-xs text-red-800 leading-relaxed">
+                        這是一項高風險任務。請確認您已檢視過對方的歷史紀錄，並願意信任此協助者進入您的私人空間。
+                    </p>
+                </div>
+
+                <div className="flex gap-3 mt-2">
+                    <button 
+                        onClick={() => setIsReviewModalOpen(false)} 
+                        className="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-500 hover:bg-gray-200"
+                    >
+                        再考慮
+                    </button>
+                    <button 
+                        onClick={handleApproveApplicant} 
+                        className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:opacity-90"
+                    >
+                        同意接取
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
       
       {/* Complete Task Confirmation Modal (Simplified) */}
       {isCompleteModalOpen && (

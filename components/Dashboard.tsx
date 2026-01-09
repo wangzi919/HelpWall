@@ -41,6 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskImage, setNewTaskImage] = useState('');
   const [selectedTime, setSelectedTime] = useState<number | null>(null);
+  const [requiresReview, setRequiresReview] = useState(false); // New State
 
   // Map Refs & Location State
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -271,6 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
     for (const task of taskList) {
         const isTaken = task.status === "in_progress";
+        const isReview = task.requires_review;
 
         const html = `
             <div style="
@@ -286,8 +288,9 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                 font-weight: 700;
                 color: #4A4A4A;
                 white-space: nowrap;
+                border: ${isReview ? '2px solid #FF6B6B' : 'none'};
             ">
-                ${task.title}
+                ${isReview ? '🛡️ ' : ''}${task.title}
                 <div style="
                     position: absolute;
                     bottom: -8px;
@@ -318,6 +321,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
     if (!selectedTime) return alert("請選擇預期時間");
     if (!currentUser) return alert("請先登入");
 
+    // Location Safety Check
+    if (!isLocationReady) {
+        const confirmDefault = window.confirm(
+            "⚠️ 注意：尚未偵測到您的精確位置。\n\n系統將會使用預設地點（台北 101）發布任務。\n建議您檢查瀏覽器定位權限，或稍候再試。\n\n確定要繼續使用預設地點發布嗎？"
+        );
+        if (!confirmDefault) return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return alert("Session expired");
 
@@ -331,8 +342,9 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         lng: userLngRef.current,
         color: ["#FFFACD", "#FFDAB9", "#D4F1F4"][Math.floor(Math.random() * 3)],
         expected_time: `${selectedTime} minutes`,
-        time_credit: time_credit
-        // status is null/undefined by default which fits "open"
+        time_credit: time_credit,
+        requires_review: requiresReview,
+        applicants: []
     };
 
     try {
@@ -361,6 +373,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         setNewTaskDesc('');
         setNewTaskImage('');
         setSelectedTime(null);
+        setRequiresReview(false);
         loadTasks();
 
     } catch (error: any) {
@@ -514,10 +527,16 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                         style={{ backgroundColor: task.color || '#FFFACD' }}
                     >
                         <div 
-                            className="w-full aspect-video rounded-lg bg-cover bg-center bg-gray-100"
+                            className="w-full aspect-video rounded-lg bg-cover bg-center bg-gray-100 relative"
                             style={{ backgroundImage: task.image_url ? `url(${task.image_url})` : undefined }}
                         >
                              {!task.image_url && <div className="w-full h-full flex items-center justify-center text-gray-300"><span className="material-symbols-outlined text-4xl">image</span></div>}
+                             {task.requires_review && (
+                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                    <span className="material-symbols-outlined text-sm">security</span>
+                                    須審核
+                                </div>
+                             )}
                         </div>
                         <div className="flex flex-col gap-1 pt-4">
                             <div className="flex items-center gap-2">
@@ -635,6 +654,22 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                                 value={newTaskImage}
                                 onChange={(e) => setNewTaskImage(e.target.value)}
                                 />
+                            </div>
+                        </div>
+
+                        {/* Security Toggle (Verified Mode) */}
+                        <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-red-50 border border-red-100 cursor-pointer" onClick={() => setRequiresReview(!requiresReview)}>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-500">
+                                    <span className="material-symbols-outlined">security</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-gray-800 text-sm">啟用安全審核模式</span>
+                                    <span className="text-xs text-gray-500">接取者需經過您的同意才能開始任務</span>
+                                </div>
+                            </div>
+                            <div className={`w-12 h-6 rounded-full p-1 transition-colors ${requiresReview ? 'bg-red-500' : 'bg-gray-300'}`}>
+                                <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${requiresReview ? 'translate-x-6' : 'translate-x-0'}`} />
                             </div>
                         </div>
 

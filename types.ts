@@ -39,6 +39,9 @@ export interface Task {
   // Columns moved from task_assignment
   status?: 'in_progress' | 'completed' | null;
   helper_uid?: string | null;
+  // New fields for verified mode
+  requires_review?: boolean;
+  applicants?: string[]; // Array of user UIDs
 }
 
 export interface ThanksCard {
