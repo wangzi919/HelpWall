@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { supabase, SUPABASE_URL, SUPABASE_KEY } from '../services/supabaseClient';
 import { Task, ThanksCard } from '../types';
 import TermsModal from './TermsModal';
 
@@ -62,6 +62,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   const [selectedAddress, setSelectedAddress] = useState<string>(''); // 🔽 NEW: 反白框顯示地址
 
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+
+  // Report State
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
 
   useEffect(() => {
     if (!taskId) return;
@@ -295,6 +300,51 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     initDetail(); // Reload
   };
 
+  const handleSendReport = async () => {
+    if (!reportReason.trim()) return alert("請輸入投訴原因");
+    if (!currentUser || !task) return;
+
+    setIsReporting(true);
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const payload = {
+            task_id: task.id,
+            task_title: task.title,
+            publisher_uid: task.user_uid,
+            publisher_name: publisher?.name || 'Unknown',
+            reporter_uid: currentUser.id,
+            reporter_email: currentUser.email,
+            reason: reportReason.trim(),
+            target_email: 'helpwall.official@gmail.com'
+        };
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/send-complaint`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+                'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "發送失敗");
+        }
+
+        alert("投訴已送出，管理員將會儘速處理。");
+        setIsReportModalOpen(false);
+        setReportReason('');
+    } catch (err: any) {
+        console.error("Report error:", err);
+        alert(`投訴發送失敗: ${err.message}`);
+    } finally {
+        setIsReporting(false);
+    }
+  };
+
   const handleReviewApplicant = async (applicant: UserData) => {
      // Fetch Stats for this applicant
      const [help, thanks] = await Promise.all([
@@ -505,9 +555,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
           <span className="material-symbols-outlined text-3xl">arrow_back</span>
         </button>
         <h2 className="text-lg font-bold flex-1 text-center">幫助詳情</h2>
-       {/* <button className="flex items-center justify-center rounded-full h-12 w-12">
-          <span className="material-symbols-outlined text-3xl">more_horiz</span>
-        </button>*/}
+        <button 
+          onClick={() => setIsReportModalOpen(true)}
+          className="flex items-center justify-center rounded-full h-12 w-12 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+          title="投訴此任務"
+        >
+          <span className="material-symbols-outlined text-3xl">report</span>
+        </button>
       </div>
 
       <main className="flex flex-col gap-4 p-4 pb-32">
@@ -726,6 +780,64 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         onConfirm={handleTermsConfirmed}
         actionType="accept"
       />
+      
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0" onClick={() => !isReporting && setIsReportModalOpen(false)} />
+          <div className="relative w-full max-w-md flex flex-col rounded-[2rem] bg-white shadow-2xl transition-all animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-red-50/50">
+              <h2 className="text-xl font-black text-red-800 flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500">report</span>
+                投訴此任務
+              </h2>
+              <button onClick={() => !isReporting && setIsReportModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">正在投訴任務</p>
+                <p className="text-sm font-bold text-gray-800 truncate">{task.title}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">請說明投訴原因</label>
+                <textarea 
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  disabled={isReporting}
+                  className="w-full h-32 p-4 rounded-2xl bg-gray-50 border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm"
+                  placeholder="例如：內容包含不當言論、詐騙嫌疑、或是任務與實際不符..."
+                />
+              </div>
+              <p className="text-[11px] text-gray-400 leading-relaxed italic">
+                * 投訴將會傳送至官方管理小組 (helpwall.official@gmail.com)，我們將在 24 小時內進行審查，並視情況對發布者採取警告或停權處分。
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button 
+                onClick={() => setIsReportModalOpen(false)}
+                disabled={isReporting}
+                className="flex-1 py-3 rounded-full font-bold text-gray-500 hover:bg-gray-200 transition-colors"
+              >
+                取消
+              </button>
+              <button 
+                onClick={handleSendReport}
+                disabled={isReporting || !reportReason.trim()}
+                className={`flex-1 py-3 rounded-full font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
+                  isReporting || !reportReason.trim() ? 'bg-gray-200 text-gray-400' : 'bg-red-500 text-white hover:scale-[1.02]'
+                }`}
+              >
+                {isReporting ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : '確認送出'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Applicant Review Modal */}
       {isReviewModalOpen && selectedApplicant && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">
