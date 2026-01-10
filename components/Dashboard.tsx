@@ -515,8 +515,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
       {/* Welcome Animation Overlay */}
       {showWelcome && (
         <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-[#FFFDF5] animate-out fade-out duration-1000 fill-mode-forwards delay-2000">
-            <div ref={lottieRef} className="w-64 h-64 md:w-80 md:h-80"></div>
-            <div className="mt-8 text-center animate-in slide-in-from-bottom-4 duration-700">
+            <div ref={lottieRef} className="w-100 h-100 md:w-[600px] md:h-[600px]"></div>
+            <div className="-mt-4 md:-mt-24 text-center animate-in slide-in-from-bottom-4 duration-700">
                 <h2 className="text-4xl md:text-5xl font-black text-slate-800 font-hand-drawn tracking-tight">
                     Bunny <span className="text-detail-primary">幫你</span>
                 </h2>
