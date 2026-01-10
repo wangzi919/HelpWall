@@ -7,6 +7,8 @@ import TermsModal from './TermsModal';
 // Declare Leaflet global type to avoid TS errors
 declare const L: any;
 
+declare const lottie: any;
+
 interface DashboardProps {
   currentUser: any;
   onNavigateToTaskDetail: (taskId: string) => void;
@@ -27,6 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const [viewMode, setViewMode] = useState<'wall' | 'map'>('wall');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userAvatarUrl, setUserAvatarUrl] = useState<string>('');
+  const [showWelcome, setShowWelcome] = useState(true);
   
   // Notification State
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -50,6 +53,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
+  const lottieRef = useRef<HTMLDivElement>(null);
+
   const userLatRef = useRef<number>(25.0330); // Default Taipei
   const userLngRef = useRef<number>(121.5654);
   const [currentUserLoc, setCurrentUserLoc] = useState<{lat: number, lng: number}>({ lat: 25.0330, lng: 121.5654 });
@@ -59,6 +64,30 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const watchIdRef = useRef<number | null>(null);
 
   const timeOptions = [5, 10, 15, 20, 25, 30];
+
+  // Welcome Animation Effect
+  useEffect(() => {
+    let animation: any;
+    if (lottieRef.current && typeof lottie !== 'undefined') {
+        animation = lottie.loadAnimation({
+            container: lottieRef.current,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: '/welcome-animation.json'
+        });
+    }
+
+    const timer = setTimeout(() => {
+        setShowWelcome(false);
+        if (animation) animation.destroy();
+    }, 3000);
+
+    return () => {
+        clearTimeout(timer);
+        if (animation) animation.destroy();
+    };
+  }, []);
 
   useEffect(() => {
     // 1. Fetch User Profile for Avatar (Only if we have a user)
@@ -483,7 +512,20 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light text-text-primary font-display pb-20">
-      
+      {/* Welcome Animation Overlay */}
+      {showWelcome && (
+        <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-[#FFFDF5] animate-out fade-out duration-1000 fill-mode-forwards delay-2000">
+            <div ref={lottieRef} className="w-64 h-64 md:w-80 md:h-80"></div>
+            <div className="mt-8 text-center animate-in slide-in-from-bottom-4 duration-700">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-800 font-hand-drawn tracking-tight">
+                    Bunny <span className="text-detail-primary">幫你</span>
+                </h2>
+                <p className="mt-3 text-slate-500 font-bold tracking-widest uppercase text-sm animate-pulse">
+                    Loading your community...
+                </p>
+            </div>
+        </div>
+      )}
       {/* App Bar */}
       <div className="sticky top-0 z-30 flex items-center justify-between bg-background-light/80 px-4 py-3 backdrop-blur-sm">
           <div className="flex size-12 shrink-0 items-center justify-start">
