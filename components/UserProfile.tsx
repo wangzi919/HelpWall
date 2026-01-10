@@ -19,6 +19,7 @@ interface UserData {
   time_credit: number;
   notify_enabled?: boolean;
   line_uid?: string;
+  reputation_points?: number;
 }
 
 interface StatData {
@@ -251,6 +252,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
     return Math.floor(diff / 86400) + " days ago";
   };
 
+  const getReputationConfig = (points: number) => {
+      if (points >= 120) return { label: '信譽極佳', color: 'text-green-600', bg: 'bg-green-100', icon: 'verified_user' };
+      if (points >= 100) return { label: '值得信賴', color: 'text-blue-600', bg: 'bg-blue-100', icon: 'shield_with_heart' };
+      if (points >= 80) return { label: '信用一般', color: 'text-orange-600', bg: 'bg-orange-100', icon: 'person' };
+      return { label: '信用預警', color: 'text-red-600', bg: 'bg-red-100', icon: 'warning' };
+  };
+
   const getStatusLabel = (status: string | undefined, isHelperView: boolean, hasThanks?: boolean, hasReceivedThanks?: boolean) => {
       if (isHelperView) {
         // Helper View Logic
@@ -288,6 +296,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
       }
   };
 
+  const repConfig = getReputationConfig(userData?.reputation_points ?? 100);
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark font-detail text-text-main flex flex-col pb-24">
       
@@ -319,16 +329,29 @@ const UserProfile: React.FC<UserProfileProps> = ({
             {/* Header / Bio */}
             <div className="flex gap-4 flex-col items-center">
                 <div 
-                    className="bg-center bg-cover rounded-full min-h-32 w-32 shadow-soft border-4 border-white bg-gray-200"
+                    className="bg-center bg-cover rounded-full min-h-32 w-32 shadow-soft border-4 border-white bg-gray-200 flex items-center justify-center relative"
                     style={{ backgroundImage: userData?.image_url ? `url('${userData.image_url}')` : undefined }}
                 >
-                    {!userData?.image_url && <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-4xl text-gray-400">person</span></div>}
+                    {!userData?.image_url && <span className="material-symbols-outlined text-4xl text-gray-400">person</span>}
+                    
+                    {/* Badge Overlay */}
+                    <div className={`absolute -bottom-2 right-0 flex items-center justify-center w-10 h-10 rounded-full border-4 border-white shadow-md ${repConfig.bg} ${repConfig.color}`}>
+                        <span className="material-symbols-outlined text-xl">{repConfig.icon}</span>
+                    </div>
                 </div>
 
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center gap-2">
                     <p className="text-text-main text-[22px] font-extrabold text-center">
                         {userData?.name || "Loading..."}
                     </p>
+                    
+                    {/* Reputation Display Section */}
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${repConfig.bg} ${repConfig.color.replace('text-', 'border-')} shadow-sm`}>
+                        <span className="text-[10px] font-black tracking-widest uppercase opacity-70">Reputation</span>
+                        <span className="text-lg font-black leading-none">{userData?.reputation_points ?? 100}</span>
+                        <div className="h-3 w-[1px] bg-current opacity-30 mx-1"></div>
+                        <span className="text-xs font-bold">{repConfig.label}</span>
+                    </div>
                 </div>
             </div>
 

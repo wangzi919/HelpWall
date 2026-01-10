@@ -18,6 +18,7 @@ interface UserData {
   image_url: string;
   help_count?: number; // Added for review stats
   thanks_count?: number; // Added for review stats
+  reputation_points?: number;
 }
 
 const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) => {
@@ -212,24 +213,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     return Math.floor(diff/86400) + " days ago";
   };
 
-  // 預設圖片庫
-  const DEFAULT_TASK_IMAGES = [
-    "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1559027615-cd2671d1a0fa?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1593113598332-cd28663a1c0c?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1489980507512-29705d0ff331?q=80&w=800&auto=format&fit=crop"
-  ];
-
-  const getTaskDisplayImage = (task: Task) => {
-    if (task.image_url && task.image_url.trim().startsWith('http')) {
-        return task.image_url;
-    }
-    const idStr = String(task.id || '');
-    const charSum = idStr.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return DEFAULT_TASK_IMAGES[charSum % DEFAULT_TASK_IMAGES.length];
-  };
-
   const isOwner = currentUser && task && currentUser.id === task.user_uid;
   const isAssigned = task && (task.status === 'in_progress' || task.status === 'completed');
   const isCompleted = task?.status === 'completed';
@@ -379,19 +362,20 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   };
 
   const handleReviewApplicant = async (applicant: UserData) => {
-     // Fetch Stats for this applicant
-     const [help, thanks] = await Promise.all([
+     const [help, thanks, profile] = await Promise.all([
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("helper_uid", applicant.uid).eq("status", "completed"),
-        supabase.from("thanks_card").select("*", { count: "exact", head: true }).eq("receiver_uid", applicant.uid)
+        supabase.from("thanks_card").select("*", { count: "exact", head: true }).eq("receiver_uid", applicant.uid),
+        supabase.from("user").select("reputation_points").eq("uid", applicant.uid).single()
      ]);
-
-     setSelectedApplicant({
-         ...applicant,
-         help_count: help.count || 0,
-         thanks_count: thanks.count || 0
+     setSelectedApplicant({ 
+        ...applicant, 
+        help_count: help.count || 0, 
+        thanks_count: thanks.count || 0,
+        reputation_points: profile.data?.reputation_points ?? 100 
      });
      setIsReviewModalOpen(true);
   };
+
 
   const handleApproveApplicant = async () => {
       if (!selectedApplicant || !task) return;
@@ -542,6 +526,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     }
     setIsDeleteModalOpen(false);
     onBack(); // Go back to dashboard
+  };
+
+  const getReputationLabel = (points: number) => {
+      if (points >= 120) return { label: '信譽極佳', color: 'text-green-600', bg: 'bg-green-100' };
+      if (points >= 100) return { label: '值得信賴', color: 'text-blue-600', bg: 'bg-blue-100' };
+      if (points >= 80) return { label: '一般', color: 'text-orange-600', bg: 'bg-orange-100' };
+      return { label: '信譽偏低', color: 'text-red-600', bg: 'bg-red-100' };
   };
 
     // 🔽 NEW
@@ -979,60 +970,56 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         </div>
       )}
 
-      {/* Applicant Review Modal */}
+        {/* Applicant Review Modal */}
       {isReviewModalOpen && selectedApplicant && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-5 border border-red-100 relative overflow-hidden">
-                {/* Header Decoration */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-400 to-orange-400"></div>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-5 border border-red-100 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-400 to-orange-400"></div>
+                  
+                  <div className="flex flex-col items-center gap-4 pt-4">
+                      {/* Avatar with Reputation Score Badge */}
+                      <div className="relative">
+                          <div className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white shadow-md bg-gray-200" style={{ backgroundImage: selectedApplicant.image_url ? `url('${selectedApplicant.image_url}')` : undefined }}></div>
+                          <div className={`absolute -bottom-1 -right-1 flex items-center justify-center w-10 h-10 rounded-full border-4 border-white shadow-lg text-white font-black text-sm bg-gradient-to-br from-slate-700 to-slate-900`}>
+                              {selectedApplicant.reputation_points || 100}
+                          </div>
+                      </div>
 
-                <div className="flex flex-col items-center gap-3 pt-4">
-                    <div 
-                        className="w-20 h-20 rounded-full bg-cover bg-center border-4 border-white shadow-md bg-gray-200"
-                        style={{ backgroundImage: selectedApplicant.image_url ? `url('${selectedApplicant.image_url}')` : undefined }}
-                    ></div>
-                    <div className="text-center">
-                        <h3 className="text-2xl font-black text-gray-800">{selectedApplicant.name}</h3>
-                        <p className="text-sm text-gray-500">申請接取您的任務</p>
-                    </div>
-                </div>
+                      <div className="text-center">
+                          <h3 className="text-2xl font-black text-gray-800">{selectedApplicant.name}</h3>
+                          {/* Prominent Reputation Display Under Avatar */}
+                          <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${getReputationLabel(selectedApplicant.reputation_points || 100).bg} ${getReputationLabel(selectedApplicant.reputation_points || 100).color} shadow-sm border border-current opacity-90`}>
+                             <span className="material-symbols-outlined text-sm">verified</span>
+                             {getReputationLabel(selectedApplicant.reputation_points || 100).label}
+                          </div>
+                      </div>
+                  </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-green-50 p-3 rounded-xl text-center">
-                        <p className="text-xs font-bold text-gray-500 uppercase">已完成幫助</p>
-                        <p className="text-2xl font-black text-green-600">{selectedApplicant.help_count}</p>
-                    </div>
-                    <div className="bg-pink-50 p-3 rounded-xl text-center">
-                        <p className="text-xs font-bold text-gray-500 uppercase">收到感謝</p>
-                        <p className="text-2xl font-black text-pink-500">{selectedApplicant.thanks_count}</p>
-                    </div>
-                </div>
+                  {/* Applicant Stats Grid */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col items-center bg-white p-3 rounded-lg shadow-sm">
+                              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">已完成幫助</p>
+                              <p className="text-2xl font-black text-slate-800">{selectedApplicant.help_count}</p>
+                          </div>
+                          <div className="flex flex-col items-center bg-white p-3 rounded-lg shadow-sm">
+                              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">收到感謝</p>
+                              <p className="text-2xl font-black text-pink-500">{selectedApplicant.thanks_count}</p>
+                          </div>
+                      </div>
+                  </div>
 
-                {/* Safety Warning */}
-                <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex gap-3 items-start">
-                    <span className="material-symbols-outlined text-red-500 text-xl shrink-0 mt-0.5">warning</span>
-                    <p className="text-xs text-red-800 leading-relaxed">
-                        這是一項高風險任務。請確認您已檢視過對方的歷史紀錄，並願意信任此協助者進入您的私人空間。
-                    </p>
-                </div>
-
-                <div className="flex gap-3 mt-2">
-                    <button 
-                        onClick={() => setIsReviewModalOpen(false)} 
-                        className="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-500 hover:bg-gray-200"
-                    >
-                        再考慮
-                    </button>
-                    <button 
-                        onClick={handleApproveApplicant} 
-                        className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:opacity-90"
-                    >
-                        同意接取
-                    </button>
-                </div>
-            </div>
-        </div>
+                  <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex gap-3 items-start">
+                      <span className="material-symbols-outlined text-red-500 text-xl shrink-0 mt-0.5">warning</span>
+                      <p className="text-xs text-red-800 leading-relaxed font-bold">請務必檢視對方的歷史紀錄與評分。同意接取後，對方將獲得此任務的執行權限。</p>
+                  </div>
+                  
+                  <div className="flex gap-3 mt-2">
+                      <button onClick={() => setIsReviewModalOpen(false)} className="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-500 hover:bg-gray-200">再考慮</button>
+                      <button onClick={handleApproveApplicant} className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:opacity-90">同意接取</button>
+                  </div>
+              </div>
+          </div>
       )}
       
       {/* Complete Task Confirmation Modal (Simplified) */}
