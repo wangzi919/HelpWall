@@ -68,6 +68,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   const [reportReason, setReportReason] = useState('');
   const [isReporting, setIsReporting] = useState(false);
 
+  const [isResolutionGuideOpen, setIsResolutionGuideOpen] = useState(false);
+
   useEffect(() => {
     if (!taskId) return;
     initDetail();
@@ -210,6 +212,24 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     return Math.floor(diff/86400) + " days ago";
   };
 
+  // 預設圖片庫
+  const DEFAULT_TASK_IMAGES = [
+    "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1559027615-cd2671d1a0fa?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1593113598332-cd28663a1c0c?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1489980507512-29705d0ff331?q=80&w=800&auto=format&fit=crop"
+  ];
+
+  const getTaskDisplayImage = (task: Task) => {
+    if (task.image_url && task.image_url.trim().startsWith('http')) {
+        return task.image_url;
+    }
+    const idStr = String(task.id || '');
+    const charSum = idStr.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return DEFAULT_TASK_IMAGES[charSum % DEFAULT_TASK_IMAGES.length];
+  };
+
   const isOwner = currentUser && task && currentUser.id === task.user_uid;
   const isAssigned = task && (task.status === 'in_progress' || task.status === 'completed');
   const isCompleted = task?.status === 'completed';
@@ -336,6 +356,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
 
         alert("投訴已送出，管理員將會儘速處理。");
         setIsReportModalOpen(false);
+        setIsResolutionGuideOpen(true);
         setReportReason('');
     } catch (err: any) {
         console.error("Report error:", err);
@@ -343,6 +364,18 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
     } finally {
         setIsReporting(false);
     }
+  };
+  const handleCopyTemplate = () => {
+      const template = `【HelpWall 任務爭議協調通知】
+你好，我是 [您的名稱]，關於任務「${task?.title}」在執行過程中發生的爭議（${reportReason || '執行不符預期'}），我已向平台報備。
+
+依據平台服務條款，希望能與你進行誠信協商。我的訴求如下：
+[請在此填入您的訴求，例如：部分退還時間幣 / 補救措施]
+
+希望能於 3 日內收到您的回覆，以避免進一步尋求法律或調解程序。`;
+      
+      navigator.clipboard.writeText(template);
+      alert("協調模板已複製到剪貼簿！");
   };
 
   const handleReviewApplicant = async (applicant: UserData) => {
@@ -832,7 +865,115 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                 {isReporting ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : '確認送出'}
-              </button>
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resolution & Support Guide Modal */}
+      {isResolutionGuideOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-lg p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0" onClick={() => setIsResolutionGuideOpen(false)} />
+          <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-[2.5rem] bg-white shadow-2xl transition-all animate-in slide-in-from-bottom-8 duration-500 overflow-hidden">
+            
+            {/* Header */}
+            <div className="p-8 pb-4 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4 shadow-inner">
+                    <span className="material-symbols-outlined text-4xl">gavel</span>
+                </div>
+                <h2 className="text-2xl font-black text-gray-900">問題處理與協調指引</h2>
+                <p className="text-gray-500 text-sm mt-2">HelpWall 已收到您的回報，我們致力於協助您解決爭議</p>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8">
+                
+                {/* Section 1: Handling Steps */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-blue-500 rounded-full" /> 處理步驟
+                    </h3>
+                    <div className="grid gap-3">
+                        <div className="flex gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 transition-hover hover:border-blue-200">
+                            <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 font-bold">1</div>
+                            <div>
+                                <p className="font-bold text-gray-800">證據保存</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">請保留所有對話記錄、照片或交易憑證，作為後續調解依據。</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 transition-hover hover:border-blue-200">
+                            <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 font-bold">2</div>
+                            <div>
+                                <p className="font-bold text-gray-800">官方審核</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">管理小組將於 24 小時內檢視該用戶過往紀錄。若屬累犯或嚴重違規，將永久停權。</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 transition-hover hover:border-blue-200">
+                            <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 font-bold">3</div>
+                            <div>
+                                <p className="font-bold text-gray-800">第三方調解</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">平台將主動凍結此任務的爭議金（時間幣），並建議您使用下方模板啟動協商。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 2: Coordination Template */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <div className="w-1.5 h-4 bg-green-500 rounded-full" /> 協調模板
+                        </h3>
+                        <button 
+                            onClick={handleCopyTemplate}
+                            className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100"
+                        >
+                            複製模板
+                        </button>
+                    </div>
+                    <div className="p-5 bg-stone-50 border border-stone-200 rounded-2xl relative font-mono text-xs text-stone-600 leading-loose whitespace-pre-wrap italic">
+                        【HelpWall 任務爭議協調通知】...希望能與你進行誠信協商。我的訴求如下：[請填入訴求]
+                        <div className="absolute top-[-8px] right-4 bg-stone-200 px-2 py-0.5 rounded text-[10px] font-bold">和解協議初稿</div>
+                    </div>
+                </div>
+
+                {/* Section 3: Legal Resources */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-orange-500 rounded-full" /> 法律與外部支援
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        <a href="https://www.laf.org.tw/" target="_blank" className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-xs font-bold border border-orange-100">
+                            <span className="material-symbols-outlined text-base">account_balance</span> 法律扶助基金會
+                        </a>
+                        <a href="https://www.judicial.gov.tw/tw/cp-125-3333-1ecb4-1.html" target="_blank" className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-xs font-bold border border-orange-100">
+                            <span className="material-symbols-outlined text-base">groups</span> 法院調解程序說明
+                        </a>
+                    </div>
+                </div>
+
+                {/* Stance Footer */}
+                <div className="p-6 rounded-3xl bg-blue-900 text-white space-y-3 shadow-xl">
+                    <p className="text-sm font-black flex items-center gap-2">
+                        <span className="material-symbols-outlined text-blue-300">info</span>
+                        平台立場說明
+                    </p>
+                    <p className="text-[11px] leading-relaxed text-blue-100 opacity-90">
+                        HelpWall 為鄰里互助媒合平台，雖不負實體賠償責任，但我們「致力於建立協調機制」。
+                        我們將視情況限制違規者的權限，並在必要時配合警方提供調查資料，守護社區誠信。
+                    </p>
+                </div>
+            </div>
+
+            {/* Bottom Button */}
+            <div className="p-8 pt-0">
+                <button 
+                    onClick={() => setIsResolutionGuideOpen(false)}
+                    className="w-full py-4 rounded-full bg-gray-900 text-white font-black shadow-lg hover:bg-black transition-all active:scale-95"
+                >
+                    我明白了
+                </button>
             </div>
           </div>
         </div>
