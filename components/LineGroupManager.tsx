@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { supabase, claimLineGroup } from '../services/supabaseClient';
-import { LineGroup } from '../types';
+
+// 定義符合前端顯示需求的介面 (Flattened View Model)
+interface DisplayGroup {
+  member_id: string; // line_group_members 的 PK
+  group_pk: string;  // line_groups 的 PK
+  group_id: string;  // LINE 真實 Group ID (Cxxxx...)
+  group_name: string;
+  picture_url?: string;
+  created_at: string;
+}
 
 interface LineGroupManagerProps {
   currentUser: any;
@@ -8,7 +17,7 @@ interface LineGroupManagerProps {
 }
 
 const LineGroupManager: React.FC<LineGroupManagerProps> = ({ currentUser, onBack }) => {
-  const [groups, setGroups] = useState<LineGroup[]>([]);
+  const [groups, setGroups] = useState<DisplayGroup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [inputGroupId, setInputGroupId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -21,14 +30,37 @@ const LineGroupManager: React.FC<LineGroupManagerProps> = ({ currentUser, onBack
 
   const fetchGroups = async () => {
     setIsLoading(true);
+    // 修改查詢邏輯：查詢 line_group_members (plural) 並關聯 line_groups
     const { data, error } = await supabase
-      .from('line_groups')
-      .select('*')
-      .eq('owner_uid', currentUser.id)
+      .from('line_group_members') // Corrected to plural based on feedback
+      .select(`
+        id,
+        created_at,
+        group:line_groups (
+            id,
+            group_id,
+            group_name
+        )
+      `)
+      .eq('user_uid', currentUser.id)
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setGroups(data);
+    if (error) {
+        console.error('Error fetching groups:', error.message);
+    }
+
+    if (data) {
+      // 資料轉換
+      const formatted: DisplayGroup[] = data.map((item: any) => ({
+        member_id: item.id,
+        created_at: item.created_at,
+        // Group Info
+        group_pk: item.group?.id,
+        group_id: item.group?.group_id || 'Unknown ID',
+        group_name: item.group?.group_name || '未命名群組',
+        // picture_url: item.group?.picture_url 
+      }));
+      setGroups(formatted);
     }
     setIsLoading(false);
   };
@@ -47,22 +79,6 @@ const LineGroupManager: React.FC<LineGroupManagerProps> = ({ currentUser, onBack
       alert("連結失敗: " + err.message);
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleToggleNotify = async (groupId: string, currentValue: boolean) => {
-    // Optimistic update
-    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, notify_enabled: !currentValue } : g));
-
-    const { error } = await supabase
-      .from('line_groups')
-      .update({ notify_enabled: !currentValue })
-      .eq('id', groupId);
-
-    if (error) {
-      alert("更新失敗");
-      // Revert
-      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, notify_enabled: currentValue } : g));
     }
   };
 
@@ -130,7 +146,7 @@ const LineGroupManager: React.FC<LineGroupManagerProps> = ({ currentUser, onBack
           {/* Group List */}
           <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between ml-1">
-                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">已管理的群組</h3>
+                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">已管理的群組 ({groups.length})</h3>
                  {isLoading && <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>}
               </div>
               
@@ -141,31 +157,33 @@ const LineGroupManager: React.FC<LineGroupManagerProps> = ({ currentUser, onBack
                   </div>
               ) : (
                   groups.map(group => (
-                    <div key={group.id} className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+                    <div key={group.member_id} className="bg-white dark:bg-zinc-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3 transition-colors hover:border-blue-200">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-blue-50 text-blue-500">
-                                    <span className="material-symbols-outlined">groups</span>
+                                {/* Group Avatar Logic */}
+                                <div 
+                                    className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center bg-gray-100 bg-cover bg-center border border-gray-200"
+                                    style={{ backgroundImage: group.picture_url ? `url('${group.picture_url}')` : undefined }}
+                                >
+                                    {!group.picture_url && <span className="material-symbols-outlined text-gray-400">groups</span>}
                                 </div>
+                                
                                 <div className="min-w-0">
-                                    <p className="font-bold text-gray-800 dark:text-gray-200 truncate">
-                                        {group.group_name || '未命名群組'}
+                                    <p className="font-bold text-gray-800 dark:text-gray-200 truncate text-base">
+                                        {group.group_name}
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate font-mono mt-0.5">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate font-mono mt-0.5 flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[10px]">tag</span>
                                         {group.group_id}
                                     </p>
                                 </div>
                             </div>
                             
-                            {/* Notify Toggle */}
+                            {/* Connected Indicator */}
                             <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                                <button 
-                                    onClick={() => handleToggleNotify(group.id, group.notify_enabled)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${group.notify_enabled ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}`}
-                                >
-                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${group.notify_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                                </button>
-                                <span className="text-[10px] text-gray-400 font-bold">通知</span>
+                                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20 text-green-500">
+                                    <span className="material-symbols-outlined text-lg">check_circle</span>
+                                </div>
                             </div>
                         </div>
                     </div>

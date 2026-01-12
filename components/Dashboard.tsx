@@ -679,7 +679,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
              {/* My Location FAB on Map */}
              <button 
                 onClick={handleManualLocate}
-                className="absolute bottom-6 right-4 z-[400] flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:text-blue-500 hover:bg-gray-50 transition-colors"
+                className="absolute top-4 left-4 z-[400] flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:text-blue-500 hover:bg-gray-50 transition-colors"
                 title="Locate Me"
              >
                 <span className="material-symbols-outlined text-2xl">
