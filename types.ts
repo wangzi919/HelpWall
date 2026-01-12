@@ -7,7 +7,8 @@ export enum AppView {
   USER_PROFILE = 'USER_PROFILE',
   TIME_CREDIT_LOG = 'TIME_CREDIT_LOG',
   GRATITUDE = 'GRATITUDE',
-  JOURNAL = 'JOURNAL'
+  JOURNAL = 'JOURNAL',
+  LINE_GROUPS = 'LINE_GROUPS'
 }
 
 export interface StickyNoteData {
@@ -39,9 +40,8 @@ export interface Task {
   // Columns moved from task_assignment
   status?: 'in_progress' | 'completed' | null;
   helper_uid?: string | null;
-  // New fields for verified mode
   requires_review?: boolean;
-  applicants?: string[]; // Array of user UIDs
+  applicants?: string[];
 }
 
 export interface ThanksCard {
@@ -52,4 +52,15 @@ export interface ThanksCard {
   message: string;
   created_at?: string;
   is_read?: boolean;
+}
+
+export interface LineGroup {
+  id: string;
+  owner_uid: string;
+  group_id?: string; // Real LINE Group ID (if bound)
+  group_name?: string;
+  notify_enabled: boolean;
+  bind_code?: string;
+  bind_expires_at?: string;
+  created_at: string;
 }

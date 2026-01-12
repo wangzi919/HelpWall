@@ -152,6 +152,35 @@ export const generateDiary = async (
 };
 
 /**
+ * Claims a LINE Group by ID via Edge Function.
+ * Endpoint: claim-line-group
+ */
+export const claimLineGroup = async (groupId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("No active session");
+
+    const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/claim-line-group`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`,
+                "apikey": SUPABASE_KEY 
+            },
+            body: JSON.stringify({ group_id: groupId })
+        }
+    );
+
+    if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Claim Group Failed: ${errText}`);
+    }
+
+    return await res.json(); 
+};
+
+/**
  * Fetches an existing journal entry from the database.
  * Matches `user_uid`, `period_type`, and strict `period_label`.
  */

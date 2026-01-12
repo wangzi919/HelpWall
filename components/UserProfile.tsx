@@ -78,7 +78,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const loadUserStats = async (id: string) => {
     // Parallelize requests to avoid waterfall
-    // helpGiven now counts tasks where helper_uid is me and status is completed
     const [req, help, thanks] = await Promise.all([
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("user_uid", id),
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("helper_uid", id).eq("status", "completed"),
@@ -93,7 +92,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   const loadUserRequests = async (id: string) => {
-    // 1. Fetch my tasks
     const { data: tasks } = await supabase
         .from("tasks")
         .select("*")
@@ -105,7 +103,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
         return;
     }
 
-    // 2. Fetch all thanks cards sent by me to see which tasks have been thanked
     const { data: myThanks } = await supabase
         .from("thanks_card")
         .select("task_id")
@@ -113,19 +110,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
     
     const thanksSet = new Set(myThanks?.map(t => t.task_id) || []);
 
-    // 3. Process to match the list display format
     const processed = tasks.map((task: any) => ({
         ...task,
         assignmentStatus: task.status, 
         helperId: task.helper_uid,
-        hasThanks: thanksSet.has(task.id) // Check if I sent thanks for this task
+        hasThanks: thanksSet.has(task.id)
     }));
 
     setTaskList(processed);
   };
 
   const loadMyHelp = async (id: string) => {
-     // 1. Tasks I am helping/helped
      const { data: tasks } = await supabase
         .from("tasks")
         .select("*")
@@ -137,8 +132,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
          return;
      }
 
-     // 2. Fetch thanks cards RECEIVED by me for these tasks
-     // We filter thanks_card where receiver_uid is me.
      const { data: receivedThanks } = await supabase
         .from("thanks_card")
         .select("task_id")
@@ -152,24 +145,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
          created_at: task.created_at,
          assignmentStatus: task.status,
          isHelperView: true,
-         hasReceivedThanks: receivedThanksSet.has(task.id) // Check if I received thanks
+         hasReceivedThanks: receivedThanksSet.has(task.id)
      }));
 
      setTaskList(processed);
   };
 
   const handleBindLine = () => {
-    // Set mode to binding
     localStorage.setItem('auth_mode', 'bind');
-
-    // Trigger LINE Redirect (Logic copied from LoginPage to avoid prop drilling complex functions)
-    const LINE_CHANNEL_ID = import.meta.env.VITE_LINE_CHANNEL_ID;
-    
-    if (!LINE_CHANNEL_ID) {
-        alert("Configuration Error: LINE Channel ID missing.");
-        return;
-    }
-
+    const LINE_CHANNEL_ID = import.meta.env.VITE_LINE_CHANNEL_ID;;
     const REDIRECT_URI = window.location.origin;
     const state = btoa(String(Math.random()));
     const nonce = btoa(String(Math.random()));
@@ -188,10 +172,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const handleToggleNotify = async () => {
     if (!currentUser || !userData) return;
-    
     const newValue = !userData.notify_enabled;
-
-    // Optimistic Update
     setUserData(prev => prev ? ({ ...prev, notify_enabled: newValue }) : null);
 
     const { error } = await supabase
@@ -200,9 +181,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       .eq('uid', currentUser.id);
 
     if (error) {
-      console.error("Failed to update notification setting:", error);
       alert("更新失敗");
-      // Revert
       setUserData(prev => prev ? ({ ...prev, notify_enabled: !newValue }) : null);
     }
   };
@@ -218,9 +197,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const handleSaveProfile = async () => {
     if (!currentUser) return;
     if (!editName.trim()) return alert("名稱不可為空");
-
     setIsSaving(true);
-    
     try {
         const { error } = await supabase
             .from('user')
@@ -229,18 +206,21 @@ const UserProfile: React.FC<UserProfileProps> = ({
                 image_url: editAvatarUrl.trim() 
             })
             .eq('uid', currentUser.id);
-
         if (error) throw error;
-
-        // Update local state
         setUserData(prev => prev ? ({ ...prev, name: editName, image_url: editAvatarUrl }) : null);
         setIsEditProfileOpen(false);
     } catch (err: any) {
-        console.error("Profile update error:", err);
         alert("更新失敗: " + err.message);
     } finally {
         setIsSaving(false);
     }
+  };
+  
+  const handleNavToLineGroups = () => {
+      setIsSettingsOpen(false);
+      if (onNavigate) {
+          onNavigate(AppView.LINE_GROUPS);
+      }
   };
 
   const timeAgo = (ts: string) => {
@@ -261,7 +241,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const getStatusLabel = (status: string | undefined, isHelperView: boolean, hasThanks?: boolean, hasReceivedThanks?: boolean) => {
       if (isHelperView) {
-        // Helper View Logic
         if (status === 'in_progress') return <span className="text-yellow-500 font-bold">In Progress</span>;
         if (status === 'completed') {
             return (
@@ -277,7 +256,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
         }
         return null;
       } else {
-        // Publisher View Logic
         if (!status) return <span className="text-red-500 font-bold">Unassigned</span>;
         if (status === 'in_progress') return <span className="text-yellow-500 font-bold">In Progress</span>;
         if (status === 'completed') {
@@ -456,9 +434,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            {/* Click outside to close */}
             <div className="absolute inset-0" onClick={() => setIsSettingsOpen(false)}></div>
-
             <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-zinc-800 shadow-2xl ring-1 ring-black/5">
                 <div className="bg-gray-50 dark:bg-zinc-900/50 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Settings</h3>
@@ -466,10 +442,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
-
                 <div className="p-6 flex flex-col gap-4">
-                    
-                    {/* Notification Switch */}
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-gray-500">notifications</span>
@@ -482,37 +455,33 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${userData?.notify_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
-
                     <hr className="border-gray-100 dark:border-gray-700" />
-
-                    {/* Bind LINE - Conditionally rendered based on line_uid existence */}
                     {userData?.line_uid ? (
-                        <button 
-                            disabled
-                            className="flex w-full items-center gap-3 rounded-xl bg-gray-100 px-4 py-3 text-gray-500 cursor-default"
-                        >
+                        <button disabled className="flex w-full items-center gap-3 rounded-xl bg-gray-100 px-4 py-3 text-gray-500 cursor-default">
                             <span className="material-symbols-outlined">link</span>
                             <span className="font-bold flex-1 text-left">已綁定 LINE 帳號</span>
                             <span className="material-symbols-outlined text-green-500">check_circle</span>
                         </button>
                     ) : (
-                        <button 
-                            onClick={handleBindLine}
-                            className="flex w-full items-center gap-3 rounded-xl bg-[#06C755] px-4 py-3 text-white shadow-sm transition-transform active:scale-95"
-                        >
+                        <button onClick={handleBindLine} className="flex w-full items-center gap-3 rounded-xl bg-[#06C755] px-4 py-3 text-white shadow-sm transition-transform active:scale-95">
                             <span className="material-symbols-outlined">link</span>
                             <span className="font-bold flex-1 text-left">綁定 LINE 帳號</span>
                             <span className="material-symbols-outlined text-sm">chevron_right</span>
                         </button>
                     )}
+                    
+                    {/* New: Manage Line Groups Button */}
+                    <button 
+                        onClick={handleNavToLineGroups}
+                        className="flex w-full items-center gap-3 rounded-xl bg-blue-50 text-blue-600 px-4 py-3 shadow-sm transition-transform active:scale-95 hover:bg-blue-100"
+                    >
+                        <span className="material-symbols-outlined">groups</span>
+                        <span className="font-bold flex-1 text-left">管理 LINE 群組</span>
+                        <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
 
                     <hr className="border-gray-100 dark:border-gray-700" />
-
-                    {/* Logout */}
-                    <button 
-                        onClick={onLogout}
-                        className="flex w-full items-center gap-3 rounded-xl bg-red-50 px-4 py-3 text-red-600 hover:bg-red-100 transition-colors active:scale-95"
-                    >
+                    <button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl bg-red-50 px-4 py-3 text-red-600 hover:bg-red-100 transition-colors active:scale-95">
                         <span className="material-symbols-outlined">logout</span>
                         <span className="font-bold flex-1 text-left">Log Out</span>
                     </button>
@@ -526,7 +495,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl flex flex-col gap-4">
                  <h3 className="text-xl font-bold text-center">編輯個人檔案</h3>
-                 
                  <div>
                     <label className="block text-sm font-bold text-gray-500 mb-1">顯示名稱</label>
                     <input 
@@ -536,7 +504,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         placeholder="Your Name"
                     />
                  </div>
-
                  <div>
                     <label className="block text-sm font-bold text-gray-500 mb-1">大頭貼連結 (URL)</label>
                     <input 
@@ -546,20 +513,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         placeholder="https://..."
                     />
                  </div>
-
                  <div className="flex gap-3 mt-2">
-                    <button 
-                        onClick={() => setIsEditProfileOpen(false)}
-                        className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 font-bold text-gray-500 hover:bg-gray-200"
-                        disabled={isSaving}
-                    >
-                        取消
-                    </button>
-                    <button 
-                        onClick={handleSaveProfile}
-                        className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:opacity-90 disabled:opacity-50"
-                        disabled={isSaving}
-                    >
+                    <button onClick={() => setIsEditProfileOpen(false)} className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 font-bold text-gray-500 hover:bg-gray-200" disabled={isSaving}>取消</button>
+                    <button onClick={handleSaveProfile} className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:opacity-90 disabled:opacity-50" disabled={isSaving}>
                         {isSaving ? '儲存中...' : '儲存變更'}
                     </button>
                  </div>

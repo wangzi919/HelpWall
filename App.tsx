@@ -7,7 +7,8 @@ import UserProfile from './components/UserProfile';
 import TimeCreditLog from './components/TimeCreditLog';
 import ThanksWall from './components/ThanksWall';
 import Journal from './components/Journal';
-import { supabase, loginWithLine } from './services/supabaseClient';
+import LineGroupManager from './components/LineGroupManager';
+import { supabase } from './services/supabaseClient';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.LOGIN);
@@ -21,15 +22,11 @@ const App: React.FC = () => {
   // State to pass data between views
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
-  const LIFF_ID = import.meta.env.VITE_LIFF_ID;
-
   useEffect(() => {
     // Check initial session only once on mount
     const checkSession = async () => {
-      let hasSession = false;
-
       // Priority Check: If there is a 'code' in the URL (from LINE Login Callback),
-      // we must force the Login View to render so that LoginPage.tsx can handle the code exchange logic.
+      // we must force the Login View to render so that LoginPage.tsx can handle the code exchange/binding logic.
       if (window.location.search.includes('code=')) {
           setCurrentView(AppView.LOGIN);
           setIsLoading(false);
@@ -39,40 +36,14 @@ const App: React.FC = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          hasSession = true;
           setCurrentUser(session.user);
+          // Only redirect to dashboard if we found a session on initial load and NOT processing a callback
           setCurrentView(AppView.DASHBOARD);
         }
       } catch (error) {
         console.error("Session check error", error);
-      } 
-
-      // LIFF Initialization & Auto Login Logic
-      try {
-        if (window.liff && LIFF_ID) {
-            await window.liff.init({ liffId: LIFF_ID });
-            
-            // Check if running in LIFF Client
-            if (window.liff.isInClient()) {
-                // If logged in to LINE but NOT Supabase, try silent login
-                if (window.liff.isLoggedIn() && !hasSession) {
-                    setIsLoading(true);
-                    const idToken = window.liff.getIDToken();
-                    if (idToken) {
-                        console.log("Auto-logging in via LIFF...");
-                        await loginWithLine({ idToken: idToken });
-                        // loginWithLine will handle the redirect via action_link
-                        return;
-                    }
-                }
-            }
-        } else if (!LIFF_ID) {
-             console.error("VITE_LIFF_ID is not set in environment variables.");
-        }
-      } catch (liffError) {
-          console.error("LIFF Init failed", liffError);
       } finally {
-          setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -92,7 +63,7 @@ const App: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [LIFF_ID]);
+  }, []);
 
   const handleLoginSuccess = () => {
      // Session update will be caught by onAuthStateChange, but we explicitly move view
@@ -102,12 +73,6 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
-    
-    // Also logout from LIFF if applicable
-    if (window.liff && window.liff.isLoggedIn()) {
-        window.liff.logout();
-    }
-    
     setCurrentView(AppView.LOGIN);
   };
 
@@ -132,6 +97,10 @@ const App: React.FC = () => {
   
   const navigateToTimeLog = () => {
     setCurrentView(AppView.TIME_CREDIT_LOG);
+  };
+  
+  const navigateToLineGroups = () => {
+    setCurrentView(AppView.LINE_GROUPS);
   };
 
   // Main navigation handler for BottomNav
@@ -194,6 +163,7 @@ const App: React.FC = () => {
           onNavigateToTaskDetail={navigateToTaskDetail}
           onNavigateToWallet={navigateToTimeLog}
           onNavigate={handleMainNavigation}
+          // Pass new nav handler if extended in types, or just access via prop in component (currently not in interface, so updated component handles it)
         />
       )}
 
@@ -202,6 +172,13 @@ const App: React.FC = () => {
           currentUser={currentUser}
           onBack={navigateToProfile}
           onNavigateToTaskDetail={navigateToTaskDetail}
+        />
+      )}
+
+      {currentView === AppView.LINE_GROUPS && (
+        <LineGroupManager 
+          currentUser={currentUser}
+          onBack={navigateToProfile}
         />
       )}
     </>
