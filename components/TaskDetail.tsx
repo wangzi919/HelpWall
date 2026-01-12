@@ -30,6 +30,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   
   // Loading State to prevent button flash
   const [isDataFullyLoaded, setIsDataFullyLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // UI Lock state
 
   // Map Refs
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -402,43 +403,30 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   };
 
   const confirmCompletion = async () => {
+    if (isProcessing) return; // Prevent double clicks
     if (!task?.time_credit || !task.helper_uid || !currentUser) return;
 
-    const credit = task.time_credit;
-    const helperId = task.helper_uid;
-    const publisherId = currentUser.id; // Owner clicked it
+    setIsProcessing(true);
 
-    // 1. Deduct from publisher
-    let { error: minusErr } = await supabase.rpc("increment_credit", {
-      user_uid: publisherId,
-      amount: -credit
-    });
-    if (minusErr) return alert("扣除發布者時間幣失敗：" + minusErr.message);
+    try {
+        // Use RPC to handle Transaction Atomicity (Credit deduction, addition, logging, status update)
+        const { error } = await supabase.rpc('complete_task_transaction', {
+            p_task_id: taskId,
+            p_publisher_id: currentUser.id,
+            p_helper_id: task.helper_uid,
+            p_amount: task.time_credit
+        });
 
-    // 2. Add to helper
-    let { error: plusErr } = await supabase.rpc("increment_credit", {
-      user_uid: helperId,
-      amount: credit
-    });
-    if (plusErr) return alert("增加協助者時間幣失敗：" + plusErr.message);
+        if (error) throw error;
 
-    // 3. Log logs
-    await supabase.from("time_credit_log").insert([
-      { user_uid: publisherId, related_task: taskId, change_amount: -credit },
-      { user_uid: helperId, related_task: taskId, change_amount: credit }
-    ]);
+        setIsCompleteModalOpen(false);
+        initDetail();
 
-    // 4. Update status directly on tasks table
-    const { error: statusErr } = await supabase
-      .from("tasks")
-      .update({ status: "completed" })
-      .eq("id", taskId);
-
-    if (statusErr) return alert("Error marking complete.");
-
-    // alert("任務已完成！時間幣已發給協助者！");
-    setIsCompleteModalOpen(false);
-    initDetail(); // Reload to show updated status
+    } catch (error: any) {
+        alert("交易失敗：" + error.message);
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   const handleSendThanks = async () => {
