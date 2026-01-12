@@ -47,6 +47,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
   const [newTaskImage, setNewTaskImage] = useState('');
   const [selectedTime, setSelectedTime] = useState<number | null>(null);
   const [requiresReview, setRequiresReview] = useState(false); // New State
+  // New: Notify Target State
+  const [notifyTarget, setNotifyTarget] = useState<'all' | 'personal' | 'group'>('all');
 
   // Map Refs & Location State
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -439,7 +441,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         expected_time: `${selectedTime} minutes`,
         time_credit: time_credit,
         requires_review: requiresReview,
-        applicants: []
+        applicants: [],
+        notify_target: notifyTarget // Add selected target
     };
 
     try {
@@ -454,13 +457,15 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
             body: JSON.stringify(newTask)
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || "Function invocation failed");
-        }
-
+        // Use json() to parse success or error details
         const result = await response.json();
-        console.log(`Notified ${result.notified} users nearby.`);
+
+        if (!response.ok) {
+            throw new Error(result.error || "Function invocation failed");
+        }
+        
+        // Show detailed notification stats
+        alert(`發布成功！\n\n已通知 ${result.notified_personal ?? 0} 位鄰居\n已推播至 ${result.notified_groups ?? 0} 個群組`);
 
         // Reset
         setIsTaskFormOpen(false);
@@ -469,6 +474,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         setNewTaskImage('');
         setSelectedTime(null);
         setRequiresReview(false);
+        setNotifyTarget('all'); // Reset target
         loadTasks();
 
     } catch (error: any) {
@@ -775,6 +781,34 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
                                 onChange={(e) => setNewTaskImage(e.target.value)}
                                 />
                             </div>
+                        </div>
+
+                        {/* Notify Target Selector */}
+                        <div className="space-y-1.5">
+                          <label className="ml-1 text-sm font-bold text-text-secondary">通知對象</label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setNotifyTarget('all')}
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition-all ${notifyTarget === 'all' ? 'bg-black text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                            >
+                              <span className="material-symbols-outlined text-lg">campaign</span>
+                              全部
+                            </button>
+                            <button
+                              onClick={() => setNotifyTarget('personal')}
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition-all ${notifyTarget === 'personal' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                            >
+                               <span className="material-symbols-outlined text-lg">person_pin_circle</span>
+                               附近
+                            </button>
+                            <button
+                              onClick={() => setNotifyTarget('group')}
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition-all ${notifyTarget === 'group' ? 'bg-[#06C755] text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                            >
+                               <span className="material-symbols-outlined text-lg">groups</span>
+                               群組
+                            </button>
+                          </div>
                         </div>
 
                         {/* Security Toggle (Verified Mode) */}
