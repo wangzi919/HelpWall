@@ -42,6 +42,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
+  // Give Up Modal
+  const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
+
   // Completion Modal
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   
@@ -215,6 +218,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   };
 
   const isOwner = currentUser && task && currentUser.id === task.user_uid;
+  const isHelper = currentUser && task && currentUser.id === task.helper_uid;
   const isAssigned = task && (task.status === 'in_progress' || task.status === 'completed');
   const isCompleted = task?.status === 'completed';
   const hasSentThanks = thanks.length > 0;
@@ -222,6 +226,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   // Logic for showing buttons (Strictly check isDataFullyLoaded)
   const showAcceptBtn = isDataFullyLoaded && !isAssigned && !isOwner;
   const showCompleteBtn = isDataFullyLoaded && task?.status === "in_progress" && isOwner;
+  const showGiveUpBtn = isDataFullyLoaded && task?.status === "in_progress" && isHelper;
   const showEditBtns = isDataFullyLoaded && isOwner && !isAssigned;
   
   // Show "Send Thanks" only if completed, I am owner, and haven't sent yet
@@ -395,6 +400,53 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       setIsReviewModalOpen(false);
       alert("已同意接取！");
       initDetail();
+  };
+
+  const handleGiveUpTask = () => {
+      setIsGiveUpModalOpen(true);
+  };
+
+  const confirmGiveUpTask = async () => {
+      setIsProcessing(true);
+      try {
+          // 1. Fetch current points first
+          const { data: userData, error: fetchError } = await supabase
+              .from('user')
+              .select('reputation_points')
+              .eq('uid', currentUser.id)
+              .single();
+          
+          if (fetchError) throw fetchError;
+          
+          const currentPoints = userData?.reputation_points || 0;
+          const newPoints = currentPoints - 5; 
+          // Note: Assuming backend doesn't constrain negative, but UI logic is consistent.
+
+          // 2. Deduct points
+          const { error: userError } = await supabase
+              .from('user')
+              .update({ reputation_points: newPoints })
+              .eq('uid', currentUser.id);
+
+          if (userError) throw new Error("扣分失敗，操作取消");
+
+          // 3. Release Task
+          const { error: taskError } = await supabase
+              .from("tasks")
+              .update({ helper_uid: null, status: null }) // Set to null for Open
+              .eq("id", taskId);
+          
+          if (taskError) throw taskError;
+
+          alert(`已放棄任務。\n信譽積分已扣除 5 點 (目前: ${newPoints})`);
+          setIsGiveUpModalOpen(false);
+          onBack();
+      } catch (err: any) {
+          console.error(err);
+          alert("放棄任務失敗: " + err.message);
+      } finally {
+          setIsProcessing(false);
+      }
   };
 
   const handleCompleteTask = () => {
@@ -752,37 +804,24 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         )}
       </main>
 
-      {/* Footer Actions */}
       <div className="fixed bottom-0 left-0 w-full p-4 bg-background-light dark:bg-background-dark pointer-events-none z-40">
-          <div className="pointer-events-auto">
-            {showAcceptBtn && (
-                <button 
-                    onClick={() => {
-                      setIsTermsOpen(true);
-                    }}
-
-                    disabled={hasApplied}
-                    className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90 ${hasApplied ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-accent-mint'}`}
-                >
-                    {hasApplied 
-                        ? '已申請，等待發布者審核' 
-                        : (task.requires_review ? '申請接取 (需審核)' : 'Accept This Task')
-                    }
-                </button>
-            )}
+        <div className="pointer-events-auto flex flex-col gap-2">
+            {showAcceptBtn && <button onClick={() => setIsTermsOpen(true)} disabled={hasApplied} className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 text-text-main gap-2 text-lg font-bold shadow-soft hover:opacity-90 ${hasApplied ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-accent-mint'}`}>{hasApplied ? '已申請，等待發布者審核' : (task.requires_review ? '申請接取 (需審核)' : 'Accept This Task')}</button>}
             
-            {showCompleteBtn && (
-                <button onClick={handleCompleteTask} className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-accent-peach text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90">
-                    Mark as Completed
+            {showCompleteBtn && <button onClick={() => setIsCompleteModalOpen(true)} className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-accent-peach text-text-main gap-2 text-lg font-bold shadow-soft hover:opacity-90">Mark as Completed</button>}
+            
+            {showGiveUpBtn && (
+                <button 
+                    onClick={handleGiveUpTask} 
+                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-red-100 text-red-600 gap-2 text-lg font-bold shadow-soft hover:bg-red-200"
+                    disabled={isProcessing}
+                >
+                    放棄任務 (扣 5 分)
                 </button>
             )}
 
-            {showSendThanksBtn && (
-                <button onClick={() => setIsThanksModalOpen(true)} className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-pink-300 text-text-main gap-2 text-lg font-bold leading-normal tracking-wide shadow-soft hover:opacity-90">
-                    ❤️ Send Gratitude
-                </button>
-            )}
-          </div>
+            {showSendThanksBtn && <button onClick={() => setIsThanksModalOpen(true)} className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 bg-pink-300 text-text-main gap-2 text-lg font-bold shadow-soft hover:opacity-90">❤️ Send Gratitude</button>}
+        </div>
       </div>
 
       {/* --- Modals --- */}
@@ -1039,6 +1078,51 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                         className="flex-1 py-3 rounded-full bg-accent-peach text-text-main font-bold shadow-soft hover:opacity-90"
                     >
                         確認完成
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* Give Up Task Modal */}
+      {isGiveUpModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-4 overflow-hidden relative">
+                {/* Warning Header */}
+                 <div className="flex flex-col items-center gap-3 pt-2">
+                    <div className="w-14 h-14 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-3xl">warning</span>
+                    </div>
+                    <h3 className="text-xl font-black text-gray-800 dark:text-white">放棄任務確認</h3>
+                </div>
+
+                <div className="text-center space-y-3">
+                     <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                        您確定要放棄此任務嗎？<br/>
+                        隨意放棄已被接受的任務會造成困擾。
+                     </p>
+                     <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-800/50">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-1">
+                           <span className="material-symbols-outlined text-lg">remove_circle</span>
+                           將扣除 5 點信譽積分
+                        </p>
+                     </div>
+                </div>
+
+                <div className="flex gap-3 mt-2">
+                    <button 
+                        onClick={() => setIsGiveUpModalOpen(false)} 
+                        className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 font-bold text-gray-500 hover:bg-gray-200 transition-colors"
+                        disabled={isProcessing}
+                    >
+                        再想想
+                    </button>
+                    <button 
+                        onClick={confirmGiveUpTask} 
+                        className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold shadow-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                        disabled={isProcessing}
+                    >
+                         {isProcessing ? '處理中...' : '確認放棄'}
                     </button>
                 </div>
             </div>
