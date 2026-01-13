@@ -162,6 +162,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
         `https://access.line.me/oauth2/v2.1/authorize` +
         `?response_type=code` + 
         `&client_id=${LINE_CHANNEL_ID}` +
+        `?redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
         `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
         `&scope=openid%20profile%20email` +
         `&state=${state}` + 
@@ -306,20 +307,28 @@ const UserProfile: React.FC<UserProfileProps> = ({
             
             {/* Header / Bio */}
             <div className="flex gap-4 flex-col items-center">
+                {/* Profile Avatar with LINE Frame */}
                 <div 
-                    className="bg-center bg-cover rounded-full min-h-32 w-32 shadow-soft border-4 border-white bg-gray-200 flex items-center justify-center relative"
-                    style={{ backgroundImage: userData?.image_url ? `url('${userData.image_url}')` : undefined }}
+                    className={`relative min-h-32 w-32 rounded-full shadow-lg ${userData?.line_uid ? 'ring-4 ring-[#06C755] ring-offset-4 ring-offset-background-light p-1' : 'border-4 border-white'}`}
                 >
-                    {!userData?.image_url && <span className="material-symbols-outlined text-4xl text-gray-400">person</span>}
-                    
-                    {/* Badge Overlay */}
-                    <div className={`absolute -bottom-2 right-0 flex items-center justify-center w-10 h-10 rounded-full border-4 border-white shadow-md ${repConfig.bg} ${repConfig.color}`}>
-                        <span className="material-symbols-outlined text-xl">{repConfig.icon}</span>
+                    <div 
+                        className="w-full h-full bg-center bg-cover rounded-full bg-gray-200 flex items-center justify-center overflow-hidden"
+                        style={{ backgroundImage: userData?.image_url ? `url('${userData.image_url}')` : undefined }}
+                    >
+                        {!userData?.image_url && <span className="material-symbols-outlined text-4xl text-gray-400">person</span>}
                     </div>
+
+                    {/* Verified Badge Icon (Overlay on Frame) */}
+                    {userData?.line_uid && (
+                        <div className="absolute -bottom-1 -right-1 flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-md bg-[#06C755]">
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png" alt="L" className="w-5 h-5" />
+                        </div>
+                    )}
+            
                 </div>
 
-                <div className="flex flex-col items-center gap-2">
-                    <p className="text-text-main text-[22px] font-extrabold text-center">
+                <div className="flex flex-col items-center gap-2 mt-2">
+                    <p className="text-text-main text-[22px] font-extrabold text-center flex items-center gap-2">
                         {userData?.name || "Loading..."}
                     </p>
                     

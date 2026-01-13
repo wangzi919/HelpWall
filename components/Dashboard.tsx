@@ -67,6 +67,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
 
   const timeOptions = [5, 10, 15, 20, 25, 30];
 
+  const [userProfile, setUserProfile] = useState<{image_url?: string, line_uid?: string} | null>(null);
+
   // Welcome Animation Effect
   useEffect(() => {
     let animation: any;
@@ -96,15 +98,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
     const fetchProfile = async () => {
       if (!currentUser) return;
       
-      const { data: profile } = await supabase
-        .from('user')
-        .select('*')
-        .eq('uid', currentUser.id)
-        .single();
-      
-      if (profile && profile.image_url) {
-        setUserAvatarUrl(profile.image_url);
-      }
+      const { data: profile } = await supabase.from('user').select('image_url, line_uid').eq('uid', currentUser.id).single();
+      if (profile) setUserProfile(profile);
     };
     
     // 2. Fetch Notifications (Unread Thanks Cards)
@@ -535,12 +530,23 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
       {/* App Bar */}
       <div className="sticky top-0 z-30 flex items-center justify-between bg-background-light/80 px-4 py-3 backdrop-blur-sm">
           <div className="flex size-12 shrink-0 items-center justify-start">
+              {/* Profile Avatar with LINE Frame Logic */}
               <div 
-                onClick={() => onNavigate(AppView.USER_PROFILE)}
-                className="aspect-square size-10 rounded-full bg-cover bg-center shadow-soft cursor-pointer bg-gray-200"
-                style={{ backgroundImage: userAvatarUrl ? `url('${userAvatarUrl}')` : undefined }}
+                onClick={() => onNavigate(AppView.USER_PROFILE)} 
+                className={`relative aspect-square size-10 rounded-full cursor-pointer transition-transform active:scale-95 ${userProfile?.line_uid ? 'ring-2 ring-[#06C755] ring-offset-2 ring-offset-background-light p-0.5' : ''}`}
               >
-                {!userAvatarUrl && <span className="flex items-center justify-center h-full w-full material-symbols-outlined text-gray-400">person</span>}
+                <div 
+                    className="w-full h-full rounded-full bg-cover bg-center bg-gray-200 shadow-sm overflow-hidden" 
+                    style={{ backgroundImage: userProfile?.image_url ? `url('${userProfile.image_url}')` : undefined }}
+                >
+                    {!userProfile?.image_url && <span className="flex items-center justify-center h-full w-full material-symbols-outlined text-gray-400">person</span>}
+                </div>
+                {/* Micro LINE Icon for Verified Users */}
+                {userProfile?.line_uid && (
+                    <div className="absolute -bottom-1 -right-1 size-4 bg-[#06C755] rounded-full flex items-center justify-center border border-white shadow-sm">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png" alt="L" className="w-2.5 h-2.5" />
+                    </div>
+                )}
               </div>
           </div>
           {/* <div className="flex items-center justify-center">

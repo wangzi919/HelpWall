@@ -12,6 +12,13 @@ interface TaskDetailProps {
   onBack: () => void;
 }
 
+interface UserHistoryItem {
+  message: string;
+  task?: {
+    title: string;
+  };
+}
+
 interface UserData {
   uid: string;
   name: string;
@@ -19,6 +26,8 @@ interface UserData {
   help_count?: number; // Added for review stats
   thanks_count?: number; // Added for review stats
   reputation_points?: number;
+  line_uid?: string;
+  history?: UserHistoryItem[];
 }
 
 const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) => {
@@ -310,7 +319,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
   };
 
   const handleSendReport = async () => {
-    if (!reportReason.trim()) return alert("請輸入投訴原因");
+    if (!reportReason.trim()) return alert("請說明投訴原因");
     if (!currentUser || !task) return;
 
     setIsReporting(true);
@@ -367,17 +376,28 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       alert("協調模板已複製到剪貼簿！");
   };
 
-  const handleReviewApplicant = async (applicant: UserData) => {
-     const [help, thanks, profile] = await Promise.all([
+const handleReviewApplicant = async (applicant: UserData) => {
+     const [help, thanksCountRes, profile, historyRes] = await Promise.all([
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("helper_uid", applicant.uid).eq("status", "completed"),
         supabase.from("thanks_card").select("*", { count: "exact", head: true }).eq("receiver_uid", applicant.uid),
-        supabase.from("user").select("reputation_points").eq("uid", applicant.uid).single()
+        supabase.from("user").select("reputation_points, line_uid").eq("uid", applicant.uid).single(),
+        supabase.from("thanks_card")
+          .select("message, task:tasks!task_id(title)")
+          .eq("receiver_uid", applicant.uid)
+          .order('created_at', { ascending: false })
+          .limit(3)
      ]);
+
      setSelectedApplicant({ 
         ...applicant, 
         help_count: help.count || 0, 
-        thanks_count: thanks.count || 0,
-        reputation_points: profile.data?.reputation_points ?? 100 
+        thanks_count: thanksCountRes.count || 0,
+        reputation_points: profile.data?.reputation_points ?? 100,
+        line_uid: profile.data?.line_uid,
+        history: (historyRes.data || []).map((item: any) => ({
+          message: item.message,
+          task: Array.isArray(item.task) ? item.task[0] : item.task
+        }))
      });
      setIsReviewModalOpen(true);
   };
@@ -1000,20 +1020,30 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
         {/* Applicant Review Modal */}
       {isReviewModalOpen && selectedApplicant && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-5 border border-red-100 relative overflow-hidden">
+              <div className="bg-white dark:bg-zinc-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col gap-5 border border-red-100 relative overflow-hidden overflow-y-auto max-h-[90vh]">
                   <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-400 to-orange-400"></div>
                   
                   <div className="flex flex-col items-center gap-4 pt-4">
-                      {/* Avatar with Reputation Score Badge */}
+                      {/* Avatar with Verified Frame */}
                       <div className="relative">
-                          <div className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white shadow-md bg-gray-200" style={{ backgroundImage: selectedApplicant.image_url ? `url('${selectedApplicant.image_url}')` : undefined }}></div>
-                          <div className={`absolute -bottom-1 -right-1 flex items-center justify-center w-10 h-10 rounded-full border-4 border-white shadow-lg text-white font-black text-sm bg-gradient-to-br from-slate-700 to-slate-900`}>
+                          <div className={`w-24 h-24 rounded-full bg-cover bg-center shadow-md bg-gray-200 ${selectedApplicant.line_uid ? 'ring-4 ring-[#06C755] ring-offset-4 ring-offset-white p-1' : 'border-4 border-white'}`} style={{ backgroundImage: selectedApplicant.image_url ? `url('${selectedApplicant.image_url}')` : undefined }}></div>
+                          
+                          {/* Micro LINE Icon for Verified Frames */}
+                          {selectedApplicant.line_uid && (
+                            <div className="absolute -bottom-1 -right-1 size-7 bg-[#06C755] rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png" alt="LINE" className="w-4 h-4" />
+                            </div>
+                          )}
+
+                          <div className={`absolute -bottom-1 -left-1 flex items-center justify-center w-9 h-9 rounded-full border-2 border-white shadow-lg text-white font-black text-xs bg-slate-800`}>
                               {selectedApplicant.reputation_points || 100}
                           </div>
                       </div>
 
                       <div className="text-center">
-                          <h3 className="text-2xl font-black text-gray-800">{selectedApplicant.name}</h3>
+                          <h3 className="text-2xl font-black text-gray-800">
+                            {selectedApplicant.name}
+                          </h3>
                           {/* Prominent Reputation Display Under Avatar */}
                           <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${getReputationLabel(selectedApplicant.reputation_points || 100).bg} ${getReputationLabel(selectedApplicant.reputation_points || 100).color} shadow-sm border border-current opacity-90`}>
                              <span className="material-symbols-outlined text-sm">verified</span>
@@ -1023,22 +1053,45 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
                   </div>
 
                   {/* Applicant Stats Grid */}
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col items-center bg-white p-3 rounded-lg shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">已完成幫助</p>
+                          <div className="flex flex-col items-center bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">已完成幫助</p>
                               <p className="text-2xl font-black text-slate-800">{selectedApplicant.help_count}</p>
                           </div>
-                          <div className="flex flex-col items-center bg-white p-3 rounded-lg shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">收到感謝</p>
+                          <div className="flex flex-col items-center bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">收到感謝</p>
                               <p className="text-2xl font-black text-pink-500">{selectedApplicant.thanks_count}</p>
                           </div>
                       </div>
+
+                      {/* Recent History Section - Redesigned without # */}
+                      {selectedApplicant.history && selectedApplicant.history.length > 0 && (
+                        <div className="mt-5 space-y-3">
+                          <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] px-1 text-center">近期互助紀錄</p>
+                          <div className="flex flex-col gap-3">
+                            {selectedApplicant.history.map((h, i) => (
+                              <div key={i} className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[10px] font-black border border-blue-100">
+                                    {h.task?.title || '未命名任務'}
+                                  </div>
+                                </div>
+                                <div className="ml-2 pl-3 border-l-2 border-slate-200 py-1">
+                                  <p className="text-[12px] text-slate-600 italic leading-relaxed line-clamp-2">
+                                    "{h.message}"
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
 
                   <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex gap-3 items-start">
                       <span className="material-symbols-outlined text-red-500 text-xl shrink-0 mt-0.5">warning</span>
-                      <p className="text-xs text-red-800 leading-relaxed font-bold">請務必檢視對方的歷史紀錄與評分。同意接取後，對方將獲得此任務的執行權限。</p>
+                      <p className="text-xs text-red-800 leading-relaxed font-bold">同意接取後，對方將獲得此任務執行權限。若有爭議請多利用檢舉功能。</p>
                   </div>
                   
                   <div className="flex gap-3 mt-2">
