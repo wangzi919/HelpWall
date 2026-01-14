@@ -234,8 +234,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   const getReputationConfig = (points: number) => {
-      if (points >= 105) return { label: '信譽極佳', color: 'text-green-600', bg: 'bg-green-100', icon: 'verified_user' };
-      if (points >= 90) return { label: '穩定', color: 'text-blue-600', bg: 'bg-blue-100', icon: 'shield_with_heart' };
+      if (points >= 105) return { label: '信用極佳', color: 'text-green-600', bg: 'bg-green-100', icon: 'verified_user' };
+      if (points >= 90) return { label: '信用穩定', color: 'text-blue-600', bg: 'bg-blue-100', icon: 'shield_with_heart' };
       if (points >= 85) return { label: '需留意', color: 'text-orange-600', bg: 'bg-orange-100', icon: 'person' };
       return { label: '風險偏高', color: 'text-red-600', bg: 'bg-red-100', icon: 'warning' };
   };
