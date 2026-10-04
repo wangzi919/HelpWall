@@ -281,8 +281,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         zoomControl: false // We will add zoom control manually or leave it minimal
       }).setView([lat, lng], 14);
 
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
       }).addTo(map);
 
       // 使用者 Marker
