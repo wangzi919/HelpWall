@@ -281,8 +281,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         zoomControl: false // We will add zoom control manually or leave it minimal
       }).setView([lat, lng], 14);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       }).addTo(map);
 
       // 使用者 Marker
