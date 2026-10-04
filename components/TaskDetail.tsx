@@ -101,7 +101,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ currentUser, taskId, onBack }) 
       }).setView([task.lat, task.lng], 15);
 
       L.tileLayer(
-        'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+        `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?api_key=${import.meta.env.VITE_PUBLIC_CARTO_API_KEY}`,
         { attribution: '&copy; OpenStreetMap contributors' }
       ).addTo(map);
 
