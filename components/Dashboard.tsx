@@ -281,7 +281,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, onNavigateToTaskDeta
         zoomControl: false // We will add zoom control manually or leave it minimal
       }).setView([lat, lng], 14);
 
-      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?api_key=${import.meta.env.VITE_PUBLIC_CARTO_API_KEY}`, {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
