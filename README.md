@@ -2,8 +2,7 @@
 
 > **將日常需求化為任務，打造零打擾的互助生活圈。**
 
-![HelpWall 吉祥物 Bunny](./screenshots/bunny-mascot.png)
-*(請在此處替換為 Bunny 吉祥物的圖片)*
+<img src="./screenshots/bunny-mascot.png" alt="HelpWall 吉祥物 Bunny" width="200" />
 
 ---
 
@@ -30,15 +29,15 @@
 
 ### 📋 任務詳情與接單
 直覺的任務卡片設計，所有需求一目了然，一鍵輕鬆接單。
-![任務詳情畫面](./screenshots/task-detail.png)
+<img src="./screenshots/task-detail.png" alt="任務詳情畫面" width="200" />
 
 ### 🚀 雙模式任務發布
 支援公開 LBS 與私域群組兩種發布模式，讓您的需求精準觸達對象。
-![發布雙模式畫面](./screenshots/publish-mode.png)
+<img src="./screenshots/publish-mode.png" alt="發布雙模式畫面" width="200" />
 
 ### 👤 個人檔案與信譽積分
 深度整合 LINE 生態，完成綁定認證確保真實性。完善的評分機制，讓每一次的幫忙都轉化為珍貴的信譽累積。
-![個人檔案與信譽積分](./screenshots/profile-and-reputation.png)
+<img src="./screenshots/profile-and-reputation.png" alt="個人檔案與信譽積分" width="200" />
 
 ---
 
