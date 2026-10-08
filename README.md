@@ -1,20 +1,64 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# HelpWall 幫幫牆 🐰
 
-# Run and deploy your AI Studio app
+> **將日常需求化為任務，打造零打擾的互助生活圈。**
 
-This contains everything you need to run your app locally.
+![HelpWall 吉祥物 Bunny](./screenshots/bunny-mascot.png)
+*(請在此處替換為 Bunny 吉祥物的圖片)*
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Lidkklwd5VLd0D7kel6Qrjofx2nP5Wym
+---
 
-## Run Locally
+## 🌟 核心理念 | Core Concept
 
-**Prerequisites:**  Node.js
+**HelpWall 幫幫牆** 致力於解決日常生活中微小卻繁瑣的求助需求（例如：順手拿杯咖啡、緊急借用行動電源）。
+我們透過 **LINE Login / LIFF** 建立極低門檻的身分串接，並利用 **LINE Bot Webhook** 無縫接收群組事件。系統能自動將使用者的文字需求轉換為清晰的「任務卡片」，大幅降低在聊天群組中直接求助所帶來的打擾感與人情壓力。
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## ✨ 雙模式互助架構 | Dual-Mode Architecture
+
+我們結合了 **公開 LBS** 與 **私域群組** 雙軌並行的互助架構，滿足各種情境下的媒合需求：
+
+### 📍 公開 LBS 模式 (Location-Based Service)
+打破群組限制！系統會依據您當下的地理位置，自動為您媒合、推播附近的任務。無論是順路幫忙還是尋求周邊協助，都能輕鬆達成。
+
+### 🔒 私域群組模式
+專為封閉社群打造。支援綁定**企業 / 園區 / 校園**的專屬 LINE 群組，進行「定向任務發布」。在充滿信任感的私域環境中互助，安全又有效率。
+
+---
+
+## 📸 核心功能與畫面預覽 | Features Showcase
+
+### 📋 任務詳情與接單
+直覺的任務卡片設計，所有需求一目了然，一鍵輕鬆接單。
+![任務詳情畫面](./screenshots/task-detail.png)
+
+### 🚀 雙模式任務發布
+支援公開 LBS 與私域群組兩種發布模式，讓您的需求精準觸達對象。
+![發布雙模式畫面](./screenshots/publish-mode.png)
+
+### 👤 個人檔案與信譽積分
+深度整合 LINE 生態，完成綁定認證確保真實性。完善的評分機制，讓每一次的幫忙都轉化為珍貴的信譽累積。
+![個人檔案與信譽積分](./screenshots/profile-and-reputation.png)
+
+---
+
+## 🛠️ 技術堆疊 | Tech Stack
+* **Frontend:** (請補充您的前端技術，例如 React, Next.js, TailwindCSS)
+* **Backend:** (請補充您的後端技術，例如 Node.js, Express)
+* **Integration:** LINE Login, LINE LIFF, LINE Messaging API (Webhook)
+
+## 🚀 快速開始 | Getting Started
+*(請依據您的專案實際情況填寫安裝與啟動步驟)*
+```bash
+# 1. 複製專案
+git clone https://github.com/wangzi919/HelpWall.git
+
+# 2. 安裝依賴
+npm install
+
+# 3. 設定環境變數
+cp .env.example .env.local
+
+# 4. 啟動開發伺服器
+npm run dev
+```
