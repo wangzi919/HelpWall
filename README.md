@@ -15,7 +15,7 @@
 
 ---
 
-## ✨ 雙模式互助架構 | Dual-Mode Architecture
+## 雙模式互助架構 | Dual-Mode Architecture
 
 我們結合了 **公開 LBS** 與 **私域群組** 雙軌並行的互助架構，滿足各種情境下的媒合需求：
 
