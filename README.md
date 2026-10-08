@@ -46,26 +46,3 @@
 <div align="left">
   <img src="./screenshots/profile-and-reputation.png" alt="個人檔案與信譽積分" width="200" />
 </div>
-
----
-
-## 🛠️ 技術堆疊 | Tech Stack
-* **Frontend:** (請補充您的前端技術，例如 React, Next.js, TailwindCSS)
-* **Backend:** (請補充您的後端技術，例如 Node.js, Express)
-* **Integration:** LINE Login, LINE LIFF, LINE Messaging API (Webhook)
-
-## 🚀 快速開始 | Getting Started
-*(請依據您的專案實際情況填寫安裝與啟動步驟)*
-```bash
-# 1. 複製專案
-git clone https://github.com/wangzi919/HelpWall.git
-
-# 2. 安裝依賴
-npm install
-
-# 3. 設定環境變數
-cp .env.example .env.local
-
-# 4. 啟動開發伺服器
-npm run dev
-```
